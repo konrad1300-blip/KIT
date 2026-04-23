@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}KIT - Panel Użytkownika{% endblock %}
+
+{% block content %}
+<h1>Panel Użytkownika</h1>
+<p>Witaj, {{ session.full_name or session.username }}! Twoja rola: {{ session.role }}</p>
+
+<h2>Twoje zadania</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nazwa projektu</th>
+            <th>Status</th>
+            <th>Postęp</th>
+            <th>Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+        <tr>
+            <td>{{ task.id }}</td>
+            <td>{{ task.project_name }}</td>
+            <td><span class="status-badge status-{{ task.status }}">{{ task.status }}</span></td>
+            <td>
+                {% if task.total_steps > 0 %}
+                    {{ task.completed_steps }}/{{ task.total_steps }}
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ (task.completed_steps / task.total_steps * 100)|round }}%"></div>
+                    </div>
+                {% else %}
+                    Brak kroków
+                {% endif %}
+            </td>
+            <td>
+                <a href="{{ url_for('view_task', task_id=task.id) }}" class="btn btn-small">Szczegóły</a>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="5">Brak przypisanych zadań</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
