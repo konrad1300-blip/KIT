@@ -1,1 +1,16 @@
 Plan działania - przyrostowy - aplikacji KIT.
+Zbuduj aplikacje działającą w przeglądarce do której
+trzeba się zalogować. Logujemy się jako użytkownika
+lub jako administrator. Aplikacja powinna mieć wbudowaną
+bazę danych qslite.
+
+Wgrałem plik pdf ale kliknięcie na niego nie otwiera go
+
+Poszerzenie listy kroków o : wykonanie modelu - wdrożeniowiec; 
+potwierdzenie w ZS i Microsoft SharePoint - technolog;
+wykonanie ilustracji - technolog; wykonanie
+ilustracji - konstruktor; przygotowanie wyceny - technolog;
+
+Chciałbym by wykonanie ilustracji myło jako jeden krok na liście
+kroków ale możliwe do wykonania zarówno przez 
+technologa jak i konstruktora
