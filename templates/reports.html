@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}KIT - Raporty{% endblock %}
+
+{% block content %}
+<h1>Raporty wykonanych zadań</h1>
+
+<form method="POST" class="report-filters">
+    <div class="form-group">
+        <label for="date_from">Data od:</label>
+        <input type="date" id="date_from" name="date_from" value="{{ date_from }}">
+    </div>
+    <div class="form-group">
+        <label for="date_to">Data do:</label>
+        <input type="date" id="date_to" name="date_to" value="{{ date_to }}">
+    </div>
+    {% if users %}
+    <div class="form-group">
+        <label for="user_id">Użytkownik:</label>
+        <select id="user_id" name="user_id">
+            <option value="">Wszyscy</option>
+            {% for user in users %}
+            <option value="{{ user.id }}" {% if filter_user_id|string == user.id|string %}selected{% endif %}>
+                {{ user.full_name or user.username }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    {% endif %}
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Filtruj</button>
+    </div>
+</form>
+
+{% if report_data %}
+<div class="export-buttons">
+    <form method="POST" action="{{ url_for('export_pdf') }}" style="display:inline;">
+        <input type="hidden" name="date_from" value="{{ date_from }}">
+        <input type="hidden" name="date_to" value="{{ date_to }}">
+        <input type="hidden" name="user_id" value="{{ filter_user_id }}">
+        <button type="submit" class="btn btn-primary">Eksportuj PDF</button>
+    </form>
+    <form method="POST" action="{{ url_for('export_excel') }}" style="display:inline;">
+        <input type="hidden" name="date_from" value="{{ date_from }}">
+        <input type="hidden" name="date_to" value="{{ date_to }}">
+        <input type="hidden" name="user_id" value="{{ filter_user_id }}">
+        <button type="submit" class="btn btn-primary">Eksportuj Excel</button>
+    </form>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Projekt</th>
+            <th>Opis kroku</th>
+            <th>Rola</th>
+            <th>Wykonane przez</th>
+            <th>Data wykonania</th>
+            <th>Czas (h)</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in report_data %}
+        <tr>
+            <td>{{ item.id }}</td>
+            <td>{{ item.project_name }}</td>
+            <td>{{ item.description }}</td>
+            <td>{{ item.role_required }}</td>
+            <td>{{ item.completed_by_full_name or item.completed_by_name or '-' }}</td>
+            <td>{{ item.completed_at }}</td>
+            <td>{{ item.time_actual or '-' }}</td>
+            <td><span class="status-badge status-{{ item.status }}">{{ item.status }}</span></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="summary">
+    <p><strong>Łączny czas:</strong> 
+        {% set total_time = [] %}
+        {% for item in report_data %}
+            {% if item.time_actual %}
+                {% if total_time.append(item.time_actual|float) %}{% endif %}
+            {% endif %}
+        {% endfor %}
+        {{ total_time|sum|round(2) }} h
+    </p>
+    <p><strong>Liczba kroków:</strong> {{ report_data|length }}</p>
+</div>
+{% else %}
+<p>Brak danych do wyświetlenia. Wybierz zakres dat i kliknij "Filtruj".</p>
+{% endif %}
+
+<a href="{{ url_for('index') }}" class="btn">Powrót</a>
+{% endblock %}

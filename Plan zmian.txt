@@ -1,0 +1,42 @@
+Plan działania - przyrostowy - aplikacji KIT.
+Zbuduj aplikacje działającą w przeglądarce do której
+trzeba się zalogować. Logujemy się jako użytkownika
+lub jako administrator. Aplikacja powinna mieć wbudowaną
+bazę danych qslite.
+
+Wgrałem plik pdf ale kliknięcie na niego nie otwiera go
+
+Poszerzenie listy kroków o : wykonanie modelu - wdrożeniowiec; 
+potwierdzenie w ZS i Microsoft SharePoint - technolog;
+wykonanie ilustracji - technolog; wykonanie
+ilustracji - konstruktor; przygotowanie wyceny - technolog;
+
+Chciałbym by wykonanie ilustracji myło jako jeden krok na liście
+kroków ale możliwe do wykonania zarówno przez 
+technologa jak i konstruktora
+
+Chciałbym by administrator miał możliwość dodawać 
+zwykłych użytkowników i takich z uprawnieniami
+administratora. Przy dodawaniu zadania niech będzie 
+możliwość dodawania priorytetu "pilne (do końca dnia), 
+bardzo pilne (natychmiast). lista zadań powinna sortować się 
+według priorytetów. do zadania powinna być też możliwość
+dodania datę zakończenia zadania.
+
+chciałbym dodać nową stronę gdzie będą się generować 
+raporty z wykonanych zadań wraz z czasem ich wykonania
+i osobą która je wykonała. raporty można będzie eksportować w 
+formacie pdf i excel. Administrator ma możliwość generowania
+raportów dla wszystkich użytkowników, użytkownik tylko dla
+siebie. z dowolnego przedziału czasowego.
+
+chciałbym by administrator miał możliwość dodawania
+nowych kroków do listy kroków i usuwania ich.
+
+Archiwum zadań: Funkcja przenoszenia zakończonych 
+zadań do "Archiwum", aby dashboard nie stał się 
+nieczytelny po kilku miesiącach pracy.
+
+Wykresy obciążenia zespołu: Prosty wykres słupkowy 
+pokazujący, ile zadań "w toku" ma obecnie każdy 
+z użytkowników lub każda z ról.

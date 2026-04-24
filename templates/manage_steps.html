@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}KIT - Zarządzanie krokami procesu{% endblock %}
+
+{% block content %}
+<h1>Zarządzanie krokami procesu</h1>
+
+<h2>Dodaj nowy krok</h2>
+<form method="POST">
+    <input type="hidden" name="action" value="add">
+    <div class="form-group">
+        <label for="description">Opis kroku:</label>
+        <input type="text" id="description" name="description" required>
+    </div>
+    <div class="form-group">
+        <label for="role_required">Rola wymagana:</label>
+        <select id="role_required" name="role_required" required>
+            <option value="konstruktor">Konstruktor</option>
+            <option value="technolog">Technolog</option>
+            <option value="wdrozeniowiec">Wdrożeniowiec</option>
+            <option value="konstruktor,technolog">Konstruktor, Technolog</option>
+            <option value="technolog,wdrozeniowiec">Technolog, Wdrożeniowiec</option>
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Dodaj</button>
+</form>
+
+<h2>Lista kroków szablonu</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Opis</th>
+            <th>Rola</th>
+            <th>Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for step in steps %}
+        <tr>
+            <td>{{ step.id }}</td>
+            <td>{{ step.description }}</td>
+            <td>{{ step.role_required }}</td>
+            <td>
+                <form method="POST" style="display:inline;" onsubmit="return confirm('Czy na pewno usunąć ten krok?')">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="step_id" value="{{ step.id }}">
+                    <button type="submit" class="btn btn-danger btn-small">Usuń</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="4">Brak zdefiniowanych kroków</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p><em>Uwaga: Kroki dodane tutaj będą dostępne jako szablon przy tworzeniu nowych zadań.</em></p>
+
+<a href="{{ url_for('index') }}" class="btn">Powrót</a>
+{% endblock %}
