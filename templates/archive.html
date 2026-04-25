@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}KIT - Archiwum zadań{% endblock %}
+
+{% block content %}
+<h1>Archiwum zadań</h1>
+
+<p><a href="{{ url_for('index') }}" class="btn btn-secondary">Powrót do listy zadań</a></p>
+
+<h2>Zarchiwizowane zadania</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nazwa projektu</th>
+            <th>Priorytet</th>
+            <th>Status</th>
+            <th>Utworzone przez</th>
+            <th>Data zakończenia</th>
+            <th>Data utworzenia</th>
+            <th>Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+        <tr>
+            <td>{{ task.id }}</td>
+            <td>{{ task.project_name }}</td>
+            <td>
+                <span class="priority-badge priority-{{ (task.priority or 'normal').replace(' ', '-') }}">
+                    {% if task.priority == 'bardzo pilne (natychmiast)' %}
+                        Bardzo pilne (natychmiast)
+                    {% elif task.priority == 'pilne (do końca dnia)' %}
+                        Pilne (do końca dnia)
+                    {% else %}
+                        Normalny
+                    {% endif %}
+                </span>
+            </td>
+            <td><span class="status-badge status-{{ task.status }}">{{ task.status }}</span></td>
+            <td>{{ task.admin_name }}</td>
+            <td>{{ task.due_date or '-' }}</td>
+            <td>{{ task.created_at }}</td>
+            <td>
+                <a href="{{ url_for('view_task', task_id=task.id) }}" class="btn btn-small">Szczegóły</a>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="8">Brak zarchiwizowanych zadań</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

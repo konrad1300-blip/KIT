@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}KIT - Wykres obciążenia zespołu{% endblock %}
+
+{% block content %}
+<h1>Wykres obciążenia zespołu</h1>
+
+<div class="workload-controls">
+    <form method="POST" id="workloadForm">
+        <div class="form-inline">
+            <div class="form-group">
+                <label for="view_type">Podział:</label>
+                <select id="view_type" name="view_type" onchange="updateWorkloadChart()">
+                    <option value="user" {% if view_type == 'user' %}selected{% endif %}>Użytkownicy</option>
+                    <option value="role" {% if view_type == 'role' %}selected{% endif %}>Rola</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="status_filter">Status:</label>
+                <select id="status_filter" name="status_filter" onchange="updateWorkloadChart()">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Wszystkie</option>
+                    <option value="nowe" {% if status_filter == 'nowe' %}selected{% endif %}>Nowe</option>
+                    <option value="w-toku" {% if status_filter == 'w-toku' %}selected{% endif %}>W toku</option>
+                    <option value="zakończone" {% if status_filter == 'zakończone' %}selected{% endif %}>Zakończone</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="date_from">Data od:</label>
+                <input type="date" id="date_from" name="date_from" value="{{ date_from }}" onchange="updateWorkloadChart()">
+            </div>
+            <div class="form-group">
+                <label for="date_to">Data do:</label>
+                <input type="date" id="date_to" name="date_to" value="{{ date_to }}" onchange="updateWorkloadChart()">
+            </div>
+            {% if users and view_type == 'user' %}
+            <div class="form-group">
+                <label for="filter_user_id">Użytkownik:</label>
+                <select id="filter_user_id" name="filter_user_id" onchange="updateWorkloadChart()">
+                    <option value="">Wszyscy</option>
+                    {% for user in users %}
+                    <option value="{{ user.id }}" {% if filter_user_id|string == user.id|string %}selected{% endif %}>
+                        {{ user.full_name or user.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <div class="form-group">
+                <button type="button" class="btn btn-primary" onclick="updateWorkloadChart()">Filtruj</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="export-buttons">
+        <form method="POST" action="{{ url_for('export_workload_pdf') }}" style="display:inline;" id="pdfForm">
+            <input type="hidden" name="view_type" value="{{ view_type }}">
+            <input type="hidden" name="status_filter" value="{{ status_filter }}">
+            <input type="hidden" name="date_from" value="{{ date_from }}">
+            <input type="hidden" name="date_to" value="{{ date_to }}">
+            <input type="hidden" name="filter_user_id" value="{{ filter_user_id or '' }}">
+            <button type="submit" class="btn btn-primary">Eksportuj PDF</button>
+        </form>
+        <form method="POST" action="{{ url_for('export_workload_excel') }}" style="display:inline;" id="excelForm">
+            <input type="hidden" name="view_type" value="{{ view_type }}">
+            <input type="hidden" name="status_filter" value="{{ status_filter }}">
+            <input type="hidden" name="date_from" value="{{ date_from }}">
+            <input type="hidden" name="date_to" value="{{ date_to }}">
+            <input type="hidden" name="filter_user_id" value="{{ filter_user_id or '' }}">
+            <button type="submit" class="btn btn-primary">Eksportuj Excel</button>
+        </form>
+    </div>
+</div>
+
+<div class="workload-container">
+    <div class="chart-wrapper">
+        <canvas id="workloadChart"></canvas>
+    </div>
+
+    <div class="workload-summary">
+        {% if workload_data %}
+        <h3>Podsumowanie</h3>
+        <div class="summary">
+            <p><strong>Łączna liczba zadań:</strong> {{ workload_stats.total_tasks }}</p>
+            <p><strong>Zadań w toku:</strong> {{ workload_stats.active_tasks }}</p>
+            <p><strong>Zakończonych:</strong> {{ workload_stats.completed_tasks }}</p>
+            {% if workload_stats.total_hours > 0 %}
+            <p><strong>Łączny czas wykonania:</strong> {{ "%.2f"|format(workload_stats.total_hours) }} h</p>
+            {% endif %}
+        </div>
+
+        <h3>Szczegóły</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>{% if view_type == 'user' %}Użytkownik{% else %}Rola{% endif %}</th>
+                    <th>Liczba zadań</th>
+                    <th>W toku</th>
+                    <th>Nowe</th>
+                    <th>Zakończone</th>
+                    {% if workload_stats.total_hours > 0 %}
+                    <th>Suma czasu (h)</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in workload_data %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.task_count }}</td>
+                    <td><span class="status-badge status-w-toku">{{ item.in_progress }}</span></td>
+                    <td><span class="status-badge status-nowe">{{ item.new }}</span></td>
+                    <td><span class="status-badge status-zakończone">{{ item.completed }}</span></td>
+                    {% if workload_stats.total_hours > 0 and item.total_hours is defined and item.total_hours > 0 %}
+                    <td>{{ "%.2f"|format(item.total_hours) }}</td>
+                    {% else %}
+                    <td>-</td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>Brak danych do wyświetlenia. Wybierz inne kryteria filtrowania.</p>
+        {% endif %}
+    </div>
+</div>
+
+<a href="{{ url_for('index') }}" class="btn">Powrót</a>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const workloadData = {{ workload_data|tojson }};
+    const viewType = "{{ view_type }}";
+    
+    let workloadChart = null;
+
+    function updateWorkloadChart() {
+        document.getElementById('workloadForm').dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+
+    function createChart() {
+        const ctx = document.getElementById('workloadChart').getContext('2d');
+        
+        if (workloadChart) {
+            workloadChart.destroy();
+        }
+
+        if (!workloadData || workloadData.length === 0) {
+            ctx.canvas.style.display = 'none';
+            return;
+        }
+
+        ctx.canvas.style.display = 'block';
+
+        const labels = workloadData.map(item => item.name);
+        const inProgressData = workloadData.map(item => item.in_progress);
+        const newData = workloadData.map(item => item.new);
+        const completedData = workloadData.map(item => item.completed);
+
+        workloadChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'W toku',
+                        data: inProgressData,
+                        backgroundColor: 'rgba(243, 156, 18, 0.8)',
+                        borderColor: 'rgba(243, 156, 18, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Nowe',
+                        data: newData,
+                        backgroundColor: 'rgba(149, 165, 166, 0.8)',
+                        borderColor: 'rgba(149, 165, 166, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Zakończone',
+                        data: completedData,
+                        backgroundColor: 'rgba(39, 174, 96, 0.8)',
+                        borderColor: 'rgba(39, 174, 96, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: viewType === 'user' ? 'Obciążenie zespołu według użytkowników' : 'Obciążenie zespołu według ról',
+                        font: {
+                            size: 18
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: false,
+                        title: {
+                            display: true,
+                            text: viewType === 'user' ? 'Użytkownik' : 'Rola'
+                        }
+                    },
+                    y: {
+                        stacked: false,
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        },
+                        title: {
+                            display: true,
+                            text: 'Liczba zadań'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Create chart on page load
+    document.addEventListener('DOMContentLoaded', createChart);
+</script>
+
+<style>
+    .workload-controls {
+        background: #ecf0f1;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+
+    .workload-container {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .chart-wrapper {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        min-height: 500px;
+        position: relative;
+    }
+
+    .workload-summary {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .workload-summary h3 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 0.5rem;
+    }
+
+    #workloadForm {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: flex-end;
+    }
+
+    @media (max-width: 768px) {
+        #workloadForm {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .chart-wrapper {
+            min-height: 400px;
+        }
+    }
+</style>
+{% endblock %}

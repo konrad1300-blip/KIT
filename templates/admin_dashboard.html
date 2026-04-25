@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}KIT - Panel Administratora{% endblock %}
+
+{% block content %}
+<h1>Panel Administratora</h1>
+
+<div class="dashboard-stats">
+    <div class="stat-card">
+        <h3>Liczba zadań</h3>
+        <p class="stat-number">{{ tasks|length }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Liczba użytkowników</h3>
+        <p class="stat-number">{{ users|length }}</p>
+    </div>
+</div>
+
+<h2>Wszystkie zadania</h2>
+<a href="{{ url_for('new_task') }}" class="btn btn-primary">Nowe zadanie</a>
+<a href="{{ url_for('archive') }}" class="btn btn-secondary">Archiwum</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nazwa projektu</th>
+            <th>Priorytet</th>
+            <th>Status</th>
+            <th>Utworzone przez</th>
+            <th>Data zakończenia</th>
+            <th>Data utworzenia</th>
+            <th>Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+        <tr>
+            <td>{{ task.id }}</td>
+            <td>{{ task.project_name }}</td>
+            <td>
+                <span class="priority-badge priority-{{ (task.priority or 'normal').replace(' ', '-') }}">
+                    {% if task.priority == 'bardzo pilne (natychmiast)' %}
+                        Bardzo pilne (natychmiast)
+                    {% elif task.priority == 'pilne (do końca dnia)' %}
+                        Pilne (do końca dnia)
+                    {% else %}
+                        Normalny
+                    {% endif %}
+                </span>
+            </td>
+            <td><span class="status-badge status-{{ task.status }}">{{ task.status }}</span></td>
+            <td>{{ task.admin_name }}</td>
+            <td>{{ task.due_date or '-' }}</td>
+            <td>{{ task.created_at }}</td>
+            <td>
+                <a href="{{ url_for('view_task', task_id=task.id) }}" class="btn btn-small">Szczegóły</a>
+                {% if task.total_steps > 0 and task.completed_steps == task.total_steps %}
+                <form method="post" action="{{ url_for('archive_task', task_id=task.id) }}" style="display: inline;" onsubmit="return confirm('Czy na pewno chcesz zarchiwizować to zadanie?');">
+                    <button type="submit" class="btn btn-small btn-warning">Archiwizuj</button>
+                </form>
+                {% endif %}
+                <form method="post" action="{{ url_for('delete_task', task_id=task.id) }}" style="display: inline;" onsubmit="return confirm('Czy na pewno chcesz USUNĄĆ to zadanie? Ta operacja jest nieodwracalna!');">
+                    <button type="submit" class="btn btn-small btn-danger">Usuń</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="8">Brak zadań</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
