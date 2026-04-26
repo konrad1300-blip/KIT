@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}KIT - Nowe zadanie{% endblock %}
+
+{% block content %}
+<h1>Utwórz nowe zadanie</h1>
+
+<form method="POST">
+    <div class="form-group">
+        <label for="project_name">Nazwa projektu:</label>
+        <input type="text" id="project_name" name="project_name" required autofocus>
+    </div>
+    <div class="form-group">
+        <label for="description">Opis:</label>
+        <textarea id="description" name="description" rows="4"></textarea>
+    </div>
+    <div class="form-group">
+        <label for="priority">Priorytet:</label>
+        <select id="priority" name="priority">
+            <option value="normal">Normalny</option>
+            <option value="pilne (do końca dnia)">Pilne (do końca dnia)</option>
+            <option value="bardzo pilne (natychmiast)">Bardzo pilne (natychmiast)</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="due_date">Data zakończenia:</label>
+        <input type="date" id="due_date" name="due_date">
+    </div>
+    
+    <div class="info-box">
+        <p><strong>Automatycznie utworzone kroki:</strong></p>
+        <ol>
+            <li>Konstruktor: Przygotowanie rysunku ilustracji</li>
+            <li>Konstruktor, Technolog: Wykonanie ilustracji</li>
+            <li>Konstruktor: Przygotowanie rysunku do kroju (DXF/DWG)</li>
+            <li>Technolog: Opracowanie BOM (Arkusz: Elementy)</li>
+            <li>Technolog: Lista procesów z czasami</li>
+            <li>Technolog: Przygotowanie wyceny</li>
+            <li>Technolog: Potwierdzenie w ZS i Microsoft SharePoint</li>
+            <li>Wdrożeniowiec: Wykonanie modelu</li>
+            <li>Wdrożeniowiec: Przygotowanie instrukcji krok po kroku</li>
+        </ol>
+    </div>
+    
+    <button type="submit" class="btn btn-primary">Utwórz zadanie</button>
+    <a href="{{ url_for('index') }}" class="btn">Anuluj</a>
+</form>
+{% endblock %}

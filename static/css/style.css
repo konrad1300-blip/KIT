@@ -1,0 +1,401 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f8f9fa;
+    color: #333;
+}
+
+nav {
+    background: #2c3e50;
+    color: white;
+    padding: 1rem;
+    margin-bottom: 2rem;
+}
+
+.nav-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.nav-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.nav-menu {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.nav-link {
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+}
+
+.nav-link:hover {
+    background: #34495e;
+    border-radius: 4px;
+}
+
+.nav-user {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.logout {
+    background: #e74c3c;
+    border-radius: 4px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.login-container {
+    max-width: 400px;
+    margin: 100px auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.login-form {
+    margin-top: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.form-inline {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+}
+
+.form-inline .form-group {
+    margin-bottom: 0;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    background: #95a5a6;
+    color: white;
+}
+
+.btn-primary {
+    background: #3498db;
+    color: white;
+}
+
+.btn-danger {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn-small {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+.table th,
+.table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.table th {
+    background: #ecf0f1;
+    font-weight: bold;
+}
+
+.status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: bold;
+}
+
+.status-nowe {
+    background-color: #95a5a6;
+    color: white;
+}
+
+.status-w-toku {
+    background-color: #f39c12;
+    color: white;
+}
+
+.status-zakończone {
+    background-color: #27ae60;
+    color: white;
+}
+
+.status-oczekujące {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.priority-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: bold;
+}
+
+.priority-normal {
+    background: #95a5a6;
+    color: white;
+}
+
+.priority-pilne-do-końca-dnia {
+    background: #e67e22;
+    color: white;
+}
+
+.priority-bardzo-pilne-natychmiast {
+    background: #e74c3c;
+    color: white;
+}
+
+.alert {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: #f39c12;
+    color: white;
+    border-radius: 4px;
+}
+
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.stat-card {
+    background: #ecf0f1;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background: #ecf0f1;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 0.25rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #27ae60;
+    transition: width 0.3s;
+}
+
+.info-box {
+    background: #d5f4e6;
+    padding: 1rem;
+    border-radius: 4px;
+    margin: 1rem 0;
+}
+
+.login-info {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #fff3cd;
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
+.input-small {
+    width: 80px;
+    padding: 0.25rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Report styles */
+.report-filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #ecf0f1;
+    border-radius: 8px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.export-buttons {
+    margin: 1rem 0;
+    display: flex;
+    gap: 1rem;
+}
+
+.summary {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #d5f4e6;
+    border-radius: 4px;
+}
+
+.summary p {
+    margin: 0.5rem 0;
+}
+
+/* Workload chart styles */
+.workload-controls {
+    background: #ecf0f1;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.workload-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.chart-wrapper {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    min-height: 500px;
+    position: relative;
+}
+
+.workload-summary {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.workload-summary h3 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 0.5rem;
+}
+
+#workloadForm {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+@media (max-width: 768px) {
+    #workloadForm {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .chart-wrapper {
+        min-height: 400px;
+    }
+}
+
+/* Manage steps */
+.form-inline {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Skill tag styles */
+.skill-tag {
+    background: #9b59b6;
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    display: inline-block;
+}
+
+.no-skill {
+    color: #e74c3c;
+    font-size: 0.85rem;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.completed-info {
+    color: #27ae60;
+    font-weight: 500;
+}
+
+.suggestions-list {
+    background: #ecf0f1;
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #bdc3c7;
+}
+
+.error, .no-results {
+    color: #e74c3c;
+    font-style: italic;
+}

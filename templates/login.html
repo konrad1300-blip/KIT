@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}KIT - Logowanie{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <h1>Logowanie do systemu KIT</h1>
+    <form method="POST" class="login-form">
+        <div class="form-group">
+            <label for="username">Login:</label>
+            <input type="text" id="username" name="username" required autofocus>
+        </div>
+        <div class="form-group">
+            <label for="password">Hasło:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Zaloguj</button>
+    </form>
+    <div class="login-info">
+        <p>Domyślne konto administratora:</p>
+        <p>Login: admin / Hasło: admin123</p>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}KIT - Profil użytkownika{% endblock %}
+
+{% block content %}
+<h1>Profil użytkownika</h1>
+
+<div class="profile-container">
+    <div class="profile-form">
+        <h2>Dane podstawowe</h2>
+        <form method="POST">
+            <div class="form-group">
+                <label for="username">Login:</label>
+                <input type="text" id="username" value="{{ user.username }}" readonly class="readonly">
+            </div>
+            <div class="form-group">
+                <label for="role">Rola:</label>
+                <input type="text" id="role" value="{{ user.role }}" readonly class="readonly">
+            </div>
+            <div class="form-group">
+                <label for="full_name">Imię i nazwisko:</label>
+                <input type="text" id="full_name" name="full_name" value="{{ user.full_name or '' }}">
+            </div>
+            
+            <h2>Umiejętności</h2>
+            <p class="info-text">Wybierz umiejętności, które posiadasz. Te tagi będą używane do sugerowania Cię do odpowiednich kroków zadań.</p>
+            
+            <div class="skills-grid">
+                {% for skill in all_skills %}
+                <div class="skill-item">
+                    <input type="checkbox" 
+                           id="skill_{{ skill.id }}" 
+                           name="skills" 
+                           value="{{ skill.id }}"
+                           {% if skill.id in user_skill_ids %}checked{% endif %}>
+                    <label for="skill_{{ skill.id }}">
+                        <span class="skill-name">{{ skill.name }}</span>
+                        <span class="skill-category">{{ skill.category }}</span>
+                        {% if skill.description %}
+                        <span class="skill-desc" title="{{ skill.description }}">ℹ️</span>
+                        {% endif %}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Zapisz profil</button>
+                <a href="{{ url_for('index') }}" class="btn">Anuluj</a>
+            </div>
+        </form>
+    </div>
+    
+    <div class="profile-info">
+        <h2>Moje umiejętności</h2>
+        {% if user_skill_ids %}
+        <div class="tags">
+            {% for skill in all_skills %}
+                {% if skill.id in user_skill_ids %}
+                <span class="tag">{{ skill.name }}</span>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <p>Nie dodano jeszcze żadnych umiejętności.</p>
+        {% endif %}
+    </div>
+</div>
+
+<a href="{{ url_for('index') }}" class="btn">Powrót</a>
+
+<style>
+    .profile-container {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .profile-form {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .profile-info {
+        background: #ecf0f1;
+        padding: 1.5rem;
+        border-radius: 8px;
+    }
+    
+    .readonly {
+        background: #ecf0f1;
+        color: #7f8c8d;
+    }
+    
+    .skills-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0;
+    }
+    
+    .skill-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        background: #f8f9fa;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+    }
+    
+    .skill-item input[type="checkbox"] {
+        margin: 0;
+    }
+    
+    .skill-item label {
+        display: flex;
+        flex-direction: column;
+        cursor: pointer;
+        flex: 1;
+    }
+    
+    .skill-name {
+        font-weight: 500;
+        color: #2c3e50;
+    }
+    
+    .skill-category {
+        font-size: 0.75rem;
+        color: #7f8c8d;
+        background: #bdc3c7;
+        padding: 0.1rem 0.3rem;
+        border-radius: 3px;
+        display: inline-block;
+        margin-top: 0.2rem;
+    }
+    
+    .skill-desc {
+        cursor: help;
+        margin-left: 0.25rem;
+    }
+    
+    .info-text {
+        color: #7f8c8d;
+        font-style: italic;
+        margin-bottom: 1rem;
+    }
+    
+    .form-actions {
+        margin-top: 1.5rem;
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .tag {
+        background: #3498db;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.875rem;
+    }
+    
+    @media (max-width: 768px) {
+        .profile-container {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}

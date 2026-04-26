@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}KIT - Zadanie {{ task.project_name }}{% endblock %}
+
+{% block content %}
+<h1>{{ task.project_name }}</h1>
+<p><strong>Status:</strong> <span class="status-badge status-{{ task.status }}">{{ task.status }}</span></p>
+<p><strong>Priorytet:</strong> 
+    <span class="priority-badge priority-{{ (task.priority or 'normal').replace(' ', '-') }}">
+        {% if task.priority == 'bardzo pilne (natychmiast)' %}
+            Bardzo pilne (natychmiast)
+        {% elif task.priority == 'pilne (do końca dnia)' %}
+            Pilne (do końca dnia)
+        {% else %}
+            Normalny
+        {% endif %}
+    </span>
+</p>
+<p><strong>Opis:</strong> {{ task.description or 'Brak opisu' }}</p>
+<p><strong>Data zakończenia:</strong> {{ task.due_date or 'Nie określono' }}</p>
+
+<h2>Kroki procesu</h2>
+{% if session.role == 'admin' %}
+<p class="info-box">
+    <strong>Inteligentne sugerowanie:</strong> Kroki z wymaganymi umiejętnościami będą przypisane automatycznie do użytkowników je posiadających.
+    Możesz ręcznie przypisać wykonawcę klikając "Przypisz".
+</p>
+{% endif %}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Kolejność</th>
+            <th>Opis</th>
+            <th>Rola</th>
+            <th>Wymagana umiejętność</th>
+            <th>Status</th>
+            <th>Czas (szac./realny)</th>
+            <th>Akcje</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for step in steps %}
+        <tr>
+            <td>{{ step.step_order }}</td>
+            <td>{{ step.description }}</td>
+            <td>{{ step.role_required }}</td>
+            <td>
+                {% if step.required_skill %}
+                <span class="skill-tag" title="Tylko użytkownicy z tą umiejętnością mogą wykonać krok">
+                    {{ step.required_skill }}
+                </span>
+                {% else %}
+                <em>Brak</em>
+                {% endif %}
+            </td>
+            <td><span class="status-badge status-{{ step.status }}">{{ step.status }}</span></td>
+            <td>
+                {% if step.time_estimated %}{{ step.time_estimated }}h{% endif %}
+                {% if step.time_actual %}/ {{ step.time_actual }}h{% endif %}
+            </td>
+            <td>
+                {% if step.status != 'zakończone' and session.role in step.role_required.split(',') %}
+                    {% if step.required_skill %}
+                        {% if step.required_skill not in user_skill_names %}
+                            <span class="no-skill">Brak wymaganej umiejętności: {{ step.required_skill }}</span>
+                        {% else %}
+                            <form method="POST" action="{{ url_for('complete_step', task_id=task.id, step_id=step.id) }}">
+                                <div class="form-inline">
+                                    <input type="number" step="0.1" name="time_actual" placeholder="Czas (h)" class="input-small">
+                                    <button type="submit" class="btn btn-primary btn-small">Zakończ</button>
+                                </div>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <form method="POST" action="{{ url_for('complete_step', task_id=task.id, step_id=step.id) }}">
+                            <div class="form-inline">
+                                <input type="number" step="0.1" name="time_actual" placeholder="Czas (h)" class="input-small">
+                                <button type="submit" class="btn btn-primary btn-small">Zakończ</button>
+                            </div>
+                        </form>
+                    {% endif %}
+                {% elif step.completed_by %}
+                    <span class="completed-info">Wykonano przez: {{ step.completed_by_name or 'Użytkownik' }}</span>
+                {% endif %}
+                
+                {% if session.role == 'admin' and step.status != 'zakończone' %}
+                <br>
+                <button class="btn btn-small btn-secondary" onclick="toggleSuggestions({{ step.id }})">Przypisz wykonawcę</button>
+                <div id="suggestions-{{ step.id }}" class="suggestions-list" style="display:none; margin-top: 0.5rem;">
+                    <em>Ładowanie...</em>
+                </div>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Pliki</h2>
+<form method="POST" action="{{ url_for('upload_file', task_id=task.id) }}" enctype="multipart/form-data" class="form-inline">
+    <input type="file" name="file" required>
+    <select name="step_id">
+        <option value="">Ogólny</option>
+        {% for step in steps %}
+        <option value="{{ step.id }}">{{ step.description }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary btn-small">Wyślij</button>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Nazwa pliku</th>
+            <th>Krok</th>
+            <th>Wysłane przez</th>
+            <th>Data</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for file in files %}
+        <tr>
+            <td><a href="{{ url_for('serve_file', filename=file.filename) }}" target="_blank">{{ file.filename }}</a></td>
+            <td>{{ file.step_id or 'Ogólny' }}</td>
+            <td>{{ file.username or 'Nieznany' }}</td>
+            <td>{{ file.uploaded_at }}</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="4">Brak plików</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{{ url_for('index') }}" class="btn">Powrót</a>
+
+<script>
+function toggleSuggestions(stepId) {
+    const container = document.getElementById('suggestions-' + stepId);
+    if (container.style.display === 'none' || container.style.display === '') {
+        container.style.display = 'block';
+        fetch('/api/suggested-performers/' + stepId)
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    container.innerHTML = '<span class="error">Brak sugerowanych wykonawców</span>';
+                    return;
+                }
+                if (data.length === 0) {
+                    container.innerHTML = '<span class="no-results">Brak użytkowników z wymaganymi kompetencjami</span>';
+                    return;
+                }
+                let html = '<form method="POST" action="{{ url_for("assign_step_performer", task_id=task.id, step_id=0) }}'.replace('0', stepId) + '">';
+                html += '<input type="hidden" name="task_id" value="{{ task.id }}">';
+                html += '<select name="user_id" class="input-small">';
+                data.forEach(u => {
+                    html += '<option value="' + u.id + '">' + u.full_name + 
+                            ' (' + u.role + ') - ' + u.active_tasks + ' aktywnych zadań</option>';
+                });
+                html += '</select> ';
+                html += '<button type="submit" class="btn btn-small btn-primary">Przypisz</button>';
+                html += '</form>';
+                container.innerHTML = html;
+            });
+    } else {
+        container.style.display = 'none';
+    }
+}
+</script>
+
+<style>
+    .skill-tag {
+        background: #9b59b6;
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+    }
+    
+    .no-skill {
+        color: #e74c3c;
+        font-size: 0.85rem;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+    
+    .completed-info {
+        color: #27ae60;
+        font-weight: 500;
+    }
+    
+    .suggestions-list {
+        background: #ecf0f1;
+        padding: 0.5rem;
+        border-radius: 4px;
+        border: 1px solid #bdc3c7;
+    }
+    
+    .error, .no-results {
+        color: #e74c3c;
+        font-style: italic;
+    }
+</style>
+{% endblock %}
