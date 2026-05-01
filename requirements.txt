@@ -1,16 +1,12 @@
-# Rdzeń aplikacji
-Flask==3.0.3
-Flask-Login==0.6.3
-Werkzeug==3.0.3
-
-# Baza danych
+Flask==3.0.0
 Flask-SQLAlchemy==3.1.1
-SQLAlchemy==2.0.31
-
-# Generowanie plików (PDF i Excel)
-fpdf2==2.7.9
+Flask-Migrate==4.0.4
+Flask-Login==0.6.3
+Flask-WTF==1.2.1
+psycopg2-binary==2.9.9
+python-dotenv==1.0.0
+werkzeug==3.0.1
+reportlab==4.0.7
+pandas==2.1.3
 openpyxl==3.1.2
-
-# Produkcja i środowisko
-gunicorn==22.0.0
-python-dotenv==1.0.1
+matplotlib==3.8.2
