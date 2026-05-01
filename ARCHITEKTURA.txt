@@ -1,0 +1,175 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║           APLIKACJA KIT - NOWA ARCHITEKTURA (REFAKTORYZACJA)                  ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STRUKTURA PLIKÓW                                                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+app.py (30 linii)
+    ↓
+    ├─→ config.py              (Konfiguracja aplikacji)
+    │   └─ DevelopmentConfig, ProductionConfig, TestingConfig
+    │
+    ├─→ database.py            (Obsługa bazy SQLite)
+    │   ├─ get_db()
+    │   ├─ close_db()
+    │   └─ init_db()
+    │
+    ├─→ models.py              (Logika biznesowa)
+    │   ├─ log_audit()
+    │   ├─ create_notification()
+    │   ├─ add_comment()
+    │   ├─ create_file_version()
+    │   └─ create_recurring_task()
+    │
+    ├─→ routes_auth.py         (Autentykacja)
+    │   ├─ /login
+    │   └─ /logout
+    │
+    ├─→ routes_admin.py        (Administracja)
+    │   ├─ /admin/users
+    │   ├─ /admin/skills
+    │   ├─ /admin/steps
+    │   └─ /admin/task-templates
+    │
+    ├─→ routes_tasks.py        (Zarządzanie zadaniami)
+    │   ├─ /task/new
+    │   ├─ /task/<id>
+    │   ├─ /task/<id>/upload
+    │   └─ /archive
+    │
+    └─→ routes_reports.py      (Raporty i analiza)
+        ├─ /reports
+        ├─ /workload
+        ├─ /calendar
+        └─ /gantt
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ PRZEPŁYW DANYCH                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+  Użytkownik
+      ↓
+  [ Przeglądarka ]
+      ↓
+  [ Flask App ] (app.py)
+      ├─ Załaduj konfigurację (config.py)
+      ├─ Połącz z bazą (database.py)
+      ├─ Routuj żądanie (routes_*)
+      │   ├─ Autoryzuj (routes_auth)
+      │   ├─ Wykonaj logikę (models.py)
+      │   ├─ Zapytaj BD (database.py)
+      │   └─ Zwróć odpowiedź
+      └─ Zamknij BD
+
+  BD (kit.db) SQLite
+      ├─ users
+      ├─ tasks
+      ├─ process_steps
+      ├─ files
+      ├─ skills
+      ├─ logs (audyt)
+      └─ ...
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ MODUŁY - ROZDZIELENIE ODPOWIEDZIALNOŚCI                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+config.py
+  └─ Odpowiada za: Ustawienia, konfiguracja środowiska
+
+database.py
+  └─ Odpowiada za: Połączenia z BD, inicjalizacja tabel
+
+models.py
+  └─ Odpowiada za: Logika biznesowa, powiadomienia, audyt
+
+routes_auth.py
+  └─ Odpowiada za: Logowanie, wylogowanie, sesje
+
+routes_admin.py
+  └─ Odpowiada za: Zarządzanie użytkownikami, umiejętnościami, krokami, szablonami
+
+routes_tasks.py
+  └─ Odpowiada za: Tworzenie zadań, wgrywanie plików, komentarze
+
+routes_reports.py
+  └─ Odpowiada za: Raporty, wykresy, eksporty, analizy
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ LICZBA LINII KODU                                                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+PRZED:  app.py (~2050 linii)
+PO:     app.py              (~30 linii)
+        config.py           (~75 linii)
+        database.py         (~350 linii)
+        models.py           (~280 linii)
+        routes_auth.py      (~80 linii)
+        routes_admin.py     (~580 linii)
+        routes_tasks.py     (~650 linii)
+        routes_reports.py   (~800 linii)
+        ───────────────────────────────
+        RAZEM:             (~2850 linii)
+
++ Lepiej organizacja
++ Łatwiejsze debugowanie
++ Łatwo znaleźć funkcjonalność
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ INSTRUKCJE URUCHOMIENIA                                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+1. Przejdź do folderu:
+   $ cd /home/konrad/python/kit2
+
+2. Uruchom aplikację:
+   $ python app.py
+
+3. Otwórz przeglądarkę:
+   http://localhost:5000/login
+
+4. Zaloguj się:
+   Login: admin
+   Hasło: admin123
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ DODAWANIE NOWEJ FUNKCJONALNOŚCI                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+1. Identyfikuj obszar (logowanie, admin, zadania, raporty)
+
+2. Edytuj odpowiedni moduł:
+   - Logowanie?         → routes_auth.py
+   - Admin?             → routes_admin.py
+   - Zadania?           → routes_tasks.py
+   - Raporty?           → routes_reports.py
+   - Logika biznesowa?  → models.py
+   - Konfiguracja?      → config.py
+
+3. Dodaj nową trasę/funkcję
+
+4. Nie edytuj app.py (za wyjątkiem wyjątkowych sytuacji)
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ KORZYŚCI NOWEJ STRUKTURY                                                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+✓ Czytelność      - Każdy moduł odpowiada za konkretny obszar
+✓ Utrzymanie      - Szybko znaleźć i zmienić funkcjonalność
+✓ Testowanie      - Łatwo testować moduły niezależnie
+✓ Skalowalność    - Łatwo dodać nowe moduły/funkcji
+✓ Współpraca      - Różne osoby mogą pracować na różnych modułach
+✓ Reusability     - Funkcje z models.py mogą być używane w wielu miejscach
+
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                  REFAKTORYZACJA ZAKOŃCZONA POMYŚLNIE!                         ║
+╚════════════════════════════════════════════════════════════════════════════════╝

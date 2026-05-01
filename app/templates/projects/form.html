@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edytuj projekt' if project else 'Nowy projekt' }} - KIT{% endblock %}
+
+{% block content %}
+<div class="project-form">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">{{ 'Edytuj projekt' if project else 'Nowy projekt' }}</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('projects.create_project') if not project else url_for('projects.edit_project', project_id=project.id) }}">
+                <div class="form-group">
+                    <label class="form-label" for="name">Nazwa projektu *</label>
+                    <input type="text" name="name" id="name" class="form-control" value="{{ project.name if project else '' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="description">Opis</label>
+                    <textarea name="description" id="description" class="form-control">{{ project.description if project else '' }}</textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="priority">Priorytet</label>
+                        <select name="priority" id="priority" class="form-control">
+                            <option value="1" {% if project and project.priority == 1 %}selected{% endif %}>Niski (1)</option>
+                            <option value="2" {% if not project or project.priority == 2 %}selected{% endif %}>Średni (2)</option>
+                            <option value="3" {% if project and project.priority == 3 %}selected{% endif %}>Wysoki (3)</option>
+                            <option value="4" {% if project and project.priority == 4 %}selected{% endif %}>Pilny (4)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="status">Status</label>
+                        <select name="status" id="status" class="form-control">
+                            <option value="active" {% if not project or project.status == 'active' %}selected{% endif %}>Aktywny</option>
+                            <option value="completed" {% if project and project.status == 'completed' %}selected{% endif %}>Zakończony</option>
+                            <option value="archived" {% if project and project.status == 'archived' %}selected{% endif %}>Archiwum</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="due_date">Termin końcowy</label>
+                    <input type="date" name="due_date" id="due_date" class="form-control"
+                           value="{{ project.due_date.strftime('%Y-%m-%d') if project and project.due_date else '' }}">
+                </div>
+
+                {% if current_user.role == 'admin' and project_templates %}
+                <div class="form-group">
+                    <label class="form-label" for="project_template_id">Szablon projektu (opcjonalnie)</label>
+                    <select name="project_template_id" id="project_template_id" class="form-control">
+                        <option value="">-- Bez szablonu --</option>
+                        {% for template in project_templates %}
+                        <option value="{{ template.id }}" {% if project and project.project_template_id == template.id %}selected{% endif %}>{{ template.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="form-text text-muted">Wybór szablonu automatycznie utworzy kroki projektu na podstawie szablonu kroków.</small>
+                </div>
+                {% endif %}
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary">{{ 'Zapisz zmiany' if project else 'Utwórz projekt' }}</button>
+                    <a href="{{ url_for('projects.list_projects') }}" class="btn btn-secondary">Anuluj</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

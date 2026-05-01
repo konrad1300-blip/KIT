@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edytuj' if template else 'Nowy' }} szablon projektu - KIT{% endblock %}
+
+{% block content %}
+<div class="project-template-form">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">{{ 'Edytuj szablon projektu' if template else 'Nowy szablon projektu' }}</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('project_templates.edit_template', template_id=template.id) if template else url_for('project_templates.create_template') }}">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="name">Nazwa szablonu *</label>
+                        <input type="text" name="name" id="name" class="form-control" value="{{ template.name if template else '' }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="description">Opis</label>
+                        <textarea name="description" id="description" class="form-control" rows="3">{{ template.description if template else '' }}</textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="step_templates">Kroki szablonowe</label>
+                    <select name="step_templates" id="step_templates" class="form-control" multiple size="8">
+                        {% for step_template in step_templates %}
+                        <option value="{{ step_template.id }}" {% if template and step_template in template.step_templates %}selected{% endif %}>{{ step_template.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="form-text text-muted">Przytrzymaj Ctrl (lub Cmd na Mac) aby wybrać wiele opcji</small>
+                </div>
+
+                {% if template %}
+                <div class="form-group form-check">
+                    <input type="checkbox" name="is_active" id="is_active" class="form-check-input" {% if template.is_active %}checked{% endif %}>
+                    <label class="form-check-label" for="is_active">Aktywny szablon</label>
+                </div>
+                {% endif %}
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary">{{ 'Zapisz zmiany' if template else 'Utwórz szablon' }}</button>
+                    {% if template %}
+                    <a href="{{ url_for('project_templates.list_templates') }}" class="btn btn-secondary">Anuluj</a>
+                    {% else %}
+                    <a href="{{ url_for('project_templates.list_templates') }}" class="btn btn-secondary">Anuluj</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Bootstrap multi-select if needed
+        var select = document.getElementById('step_templates');
+        if (select) {
+            // You can add a plugin like bootstrap-select here if desired
+            // For now, we'll use the native multiple select
+        }
+    });
+</script>
+{% endblock %}

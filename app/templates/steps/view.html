@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}{{ step.name }} - KIT{% endblock %}
+
+{% block content %}
+<div class="step-view">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <h1>{{ step.name }}</h1>
+            {% if step.project %}
+            <p class="text-muted">Projekt: <a href="{{ url_for('projects.view_project', project_id=step.project.id) }}">{{ step.project.name }}</a></p>
+            {% endif %}
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{{ url_for('steps.edit_step', step_id=step.id) }}" class="btn btn-secondary">Edytuj</a>
+            {% if current_user.role == 'admin' or step.assigned_to == current_user.id %}
+            <form method="POST" action="{{ url_for('steps.change_status', step_id=step.id, status='progress') }}" style="display: inline;">
+                <button type="submit" class="btn btn-info" {% if step.status == 'in_progress' %}disabled{% endif %}>W trakcie</button>
+            </form>
+            <form method="POST" action="{{ url_for('steps.change_status', step_id=step.id, status='complete') }}" style="display: inline;">
+                <button type="submit" class="btn btn-success" {% if step.status == 'completed' %}disabled{% endif %}>Zakończ</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="stats-grid" style="margin-bottom: 30px;">
+        <div class="stat-card">
+            <h3>Status</h3>
+            <div class="stat-value">
+                <span class="badge badge-{{ 'success' if step.status == 'completed' else 'warning' if step.status == 'in_progress' else 'info' }}">
+                    {{ {
+                        'pending': 'Do zrobienia',
+                        'in_progress': 'W trakcie',
+                        'completed': 'Zakończone'
+                    }[step.status] }}
+                </span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <h3>Priorytet</h3>
+            <div class="stat-value"><span class="badge priority-{{ step.priority }}">{{ step.priority|replace('_', ' ') }}</span></div>
+        </div>
+
+        <div class="stat-card">
+            <h3>Przypisane do</h3>
+            <div class="stat-value">{{ step.assignee.full_name if step.assignee else 'Nieprzypisane' }}</div>
+        </div>
+
+        <div class="stat-card">
+            <h3>Termin</h3>
+            <div class="stat-value">
+                {{ step.due_date.strftime('%Y-%m-%d') if step.due_date else 'Brak terminu' }}
+                {% if step.is_overdue %}<span class="badge badge-danger">Przeterminowane</span>{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Szczegóły zadania</h2>
+        </div>
+        <div class="card-body">
+            {% if step.description %}
+            <div class="detail-section">
+                <h4>Opis</h4>
+                <p>{{ step.description }}</p>
+            </div>
+            {% endif %}
+
+            <div class="detail-section">
+                <h4>Informacje</h4>
+                <table class="info-table">
+                    <tr>
+                        <td><strong>Typ kroku:</strong></td>
+                        <td>{{ step.step_type|replace('_', ' ') if step.step_type else 'Nieokreślony' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Szacowany czas:</strong></td>
+                        <td>{{ step.estimated_time }} minut</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Utworzone przez:</strong></td>
+                        <td>{{ step.creator.full_name if step.creator else 'Nieznany' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Data utworzenia:</strong></td>
+                        <td>{{ step.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ostatnia aktualizacja:</strong></td>
+                        <td>{{ step.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    </tr>
+                </table>
+            </div>
+
+            {% if step.notes %}
+            <div class="detail-section">
+                <h4>Notatki</h4>
+                <p>{{ step.notes }}</p>
+            </div>
+            {% endif %}
+
+            {% if step.completed_at %}
+            <div class="detail-section">
+                <h4>Zakończono</h4>
+                <p>{{ step.completed_at.strftime('%Y-%m-%d %H:%M') }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Comments Section -->
+    <div class="card" style="margin-top: 20px;">
+        <div class="card-header">
+            <h2 class="card-title">Komentarze</h2>
+        </div>
+        <div class="card-body">
+             {% if sorted_comments | length > 0 %}
+             <div class="comments-list">
+                 {% for comment in sorted_comments %}
+                 <div class="comment">
+                     <div class="comment-header">
+                         <strong>{{ comment.author.full_name }}</strong>
+                         <span class="text-muted">{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                     </div>
+                     <div class="comment-body">
+                         {{ comment.content }}
+                     </div>
+                 </div>
+                 {% endfor %}
+             </div>
+             {% else %}
+             <p>Brak komentarzy.</p>
+             {% endif %}
+
+            {% if current_user.is_authenticated %}
+            <div class="comment-form" style="margin-top: 20px;">
+                <form method="POST" action="{{ url_for('steps.add_comment', step_id=step.id) }}">
+                    <div class="form-group">
+                        <label class="form-label" for="comment">Dodaj komentarz</label>
+                        <textarea name="content" id="comment" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Dodaj komentarz</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+        <a href="{{ url_for('steps.list_steps') }}" class="btn btn-secondary">← Powrót do listy</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh page every 60 seconds to show updates (optional)
+// setInterval(() => location.reload(), 60000);
+</script>
+{% endblock %}

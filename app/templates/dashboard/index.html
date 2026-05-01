@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}Pulpit - KIT{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <h1>Pulpit</h1>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Moje zadania</h3>
+            <div class="stat-value">{{ stats.my_steps }}</div>
+            <div class="stat-details">
+                <span class="badge badge-warning">{{ stats.my_pending }} do zrobienia</span>
+                <span class="badge badge-info">{{ stats.my_in_progress }} w trakcie</span>
+                <span class="badge badge-success">{{ stats.my_completed }} zakończone</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <h3>Wszystkie zadania</h3>
+            <div class="stat-value">{{ stats.total_steps }}</div>
+            <div class="stat-details">
+                <span class="badge badge-warning">{{ stats.pending }} do zrobienia</span>
+                <span class="badge badge-info">{{ stats.in_progress }} w trakcie</span>
+                <span class="badge badge-success">{{ stats.completed }} zakończone</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <h3>Projekty aktywne</h3>
+            <div class="stat-value">{{ stats.active_projects }}</div>
+        </div>
+
+        <div class="stat-card">
+            <h3>Terminy</h3>
+            <div class="stat-value">{{ overdue_steps|length }}</div>
+            <div class="stat-label">przekroczonych</div>
+        </div>
+    </div>
+
+    <!-- High Priority Steps -->
+    {% if high_priority_steps %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Zadania wysokiego priorytetu</h2>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nazwa</th>
+                        <th>Projekt</th>
+                        <th>Przypisane do</th>
+                        <th>Termin</th>
+                        <th>Priorytet</th>
+                        <th>Status</th>
+                        <th>Akcje</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for step in high_priority_steps %}
+                    <tr class="{% if step.is_overdue %}overdue{% endif %}">
+                        <td>{{ step.name }}</td>
+                        <td>{{ step.project.name if step.project else '-' }}</td>
+                        <td>{{ step.assignee.full_name if step.assignee else 'Nieprzypisane' }}</td>
+                        <td>
+                            {{ step.due_date.strftime('%Y-%m-%d') if step.due_date else 'Brak terminu' }}
+                            {% if step.is_overdue %}<span class="badge badge-danger">Przeterminowane</span>{% endif %}
+                        </td>
+                        <td><span class="badge priority-{{ step.priority }}">{{ step.priority|replace('_', ' ') }}</span></td>
+                        <td><span class="badge badge-{{ 'success' if step.status == 'completed' else 'warning' if step.status == 'in_progress' else 'info' }}">{{ step.status|replace('_', ' ') }}</span></td>
+                        <td>
+                            <a href="{{ url_for('steps.edit_step', step_id=step.id) }}" class="btn btn-small btn-primary">Edytuj</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Projects Overview -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Postęp projektów</h2>
+            <a href="{{ url_for('projects.list_projects') }}" class="btn btn-secondary">Zobacz wszystkie</a>
+        </div>
+        <div class="card-body">
+            <div class="projects-grid">
+                {% for stat in project_stats %}
+                <div class="project-card">
+                    <h3>{{ stat.project.name }}</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ stat.completion_percentage }}%"></div>
+                    </div>
+                    <p>{{ stat.completion_percentage }}% ukończone</p>
+                    <p class="text-muted">{{ stat.total_steps }} zadań ({{ stat.in_progress }} w trakcie)</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Steps -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Ostatnie zadania</h2>
+            <a href="{{ url_for('steps.list_steps') }}" class="btn btn-secondary">Zobacz wszystkie</a>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nazwa</th>
+                        <th>Projekt</th>
+                        <th>Przypisane do</th>
+                        <th>Status</th>
+                        <th>Utworzono</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for step in recent_steps %}
+                    <tr>
+                        <td>{{ step.name }}</td>
+                        <td>{{ step.project.name if step.project else '-' }}</td>
+                        <td>{{ step.assignee.full_name if step.assignee else 'Nieprzypisane' }}</td>
+                        <td><span class="badge badge-{{ 'success' if step.status == 'completed' else 'warning' if step.status == 'in_progress' else 'info' }}">{{ step.status|replace('_', ' ') }}</span></td>
+                        <td>{{ step.created_at.strftime('%Y-%m-%d') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.dashboard h1 {
+    margin-bottom: 20px;
+    color: #2c3e50;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.stat-card h3 {
+    margin: 0 0 10px 0;
+    color: #666;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.stat-details {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.stat-label {
+    color: #999;
+    font-size: 0.9rem;
+}
+
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.project-card {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.project-card h3 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+}
+
+.progress-bar {
+    height: 10px;
+    background: #e9ecef;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #2ecc71;
+    transition: width 0.3s ease;
+}
+
+.project-card p {
+    margin: 5px 0;
+    color: #666;
+}
+
+.text-muted {
+    color: #999;
+    font-size: 0.9rem;
+}
+
+.overdue {
+    background-color: #fff5f5;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Notification dropdown toggle
+    const notificationBtn = document.getElementById('notificationBtn');
+    const notificationDropdown = document.getElementById('notificationDropdown');
+
+    if (notificationBtn && notificationDropdown) {
+        notificationBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            notificationDropdown.classList.toggle('active');
+        });
+
+        document.addEventListener('click', function() {
+            notificationDropdown.classList.remove('active');
+        });
+    }
+});
+</script>
+{% endblock %}

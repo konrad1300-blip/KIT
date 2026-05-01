@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Rejestracja - KIT{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Rejestracja</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('auth.register') }}">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="first_name">Imię</label>
+                        <input type="text" name="first_name" id="first_name" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="last_name">Nazwisko</label>
+                        <input type="text" name="last_name" id="last_name" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="username">Nazwa użytkownika *</label>
+                    <input type="text" name="username" id="username" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="email">Email *</label>
+                    <input type="email" name="email" id="email" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="password">Hasło * (min. 6 znaków)</label>
+                    <input type="password" name="password" id="password" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="confirm_password">Potwierdź hasło *</label>
+                    <input type="password" name="confirm_password" id="confirm_password" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Umiejętności (opcjonalnie)</label>
+                    <div class="skills-grid">
+                        {% for skill in skills %}
+                        <div class="skill-checkbox">
+                            <input type="checkbox" name="skills" id="skill_{{ skill.id }}" value="{{ skill.id }}">
+                            <label for="skill_{{ skill.id }}">{{ skill.name }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Zarejestruj</button>
+            </form>
+            <p class="text-center mt-3">
+                Masz już konto? <a href="{{ url_for('auth.login') }}">Zaloguj się</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.auth-container {
+    max-width: 500px;
+    margin: 30px auto;
+}
+
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.btn-block {
+    width: 100%;
+    padding: 10px;
+}
+
+.skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.skill-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.skill-checkbox input[type="checkbox"] {
+    width: auto;
+}
+
+.mt-3 {
+    margin-top: 1rem;
+}
+
+.text-center {
+    text-align: center;
+}
+</style>
+{% endblock %}
