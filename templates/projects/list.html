@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Projekty - KIT{% endblock %}
+
+{% block content %}
+<div class="projects-index">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1>Projekty</h1>
+        <div style="display: flex; gap: 10px;">
+            <form method="GET" style="display: flex; gap: 5px;">
+                <input type="text" name="search" placeholder="Szukaj..." value="{{ request.args.get('search', '') }}" class="form-control" style="width: 200px;">
+                <select name="status" class="form-control">
+                    <option value="">Wszystkie statusy</option>
+                    <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>Aktywne</option>
+                    <option value="completed" {% if request.args.get('status') == 'completed' %}selected{% endif %}>Zakończone</option>
+                    <option value="archived" {% if request.args.get('status') == 'archived' %}selected{% endif %}>Archiwum</option>
+                </select>
+                <button type="submit" class="btn btn-primary">Filtruj</button>
+            </form>
+            <a href="{{ url_for('projects.export_projects') }}" class="btn btn-info">📊 Eksport do Excel</a>
+            <a href="{{ url_for('projects.create_project') }}" class="btn btn-success">Nowy projekt</a>
+        </div>
+    </div>
+
+    {% if projects.items %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nazwa</th>
+                <th>Opis</th>
+                <th>Priorytet</th>
+                <th>Status</th>
+                <th>Postęp</th>
+                <th>Utworzony</th>
+                <th>Akcje</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for project in projects.items %}
+            <tr>
+                <td><strong>{{ project.name }}</strong></td>
+                <td>{{ (project.description[:50] if project.description else '') }}...</td>
+                <td><span class="badge priority-{{ project.priority_label }}">{{ project.priority_label|capitalize }}</span></td>
+                <td><span class="badge badge-{{ 'success' if project.status == 'completed' else 'warning' if project.status == 'active' else 'secondary' }}">{{ project.status }}</span></td>
+                <td>
+                    <div class="progress-bar" style="width: 150px;">
+                        <div class="progress-fill" style="width: {{ project.completion_percentage }}%"></div>
+                    </div>
+                    <small>{{ project.completion_percentage }}%</small>
+                </td>
+                <td>{{ project.created_at.strftime('%Y-%m-%d') }}</td>
+                <td>
+                    <a href="{{ url_for('projects.view_project', project_id=project.id) }}" class="btn btn-small btn-primary">Zobacz</a>
+                    <a href="{{ url_for('projects.edit_project', project_id=project.id) }}" class="btn btn-small btn-secondary">Edytuj</a>
+                    {% if current_user.has_role('admin') %}
+                    {% if project.status != 'archived' %}
+                    <form action="{{ url_for('projects.archive_project', project_id=project.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Czy na pewno zarchiwizować projekt?');">
+                        <button type="submit" class="btn btn-small btn-warning">Archiwizuj</button>
+                    </form>
+                    {% endif %}
+                    <form action="{{ url_for('projects.delete_project', project_id=project.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Czy na pewno usunąć projekt?');">
+                        <button type="submit" class="btn btn-small btn-danger">Usuń</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination">
+        {% if projects.has_prev %}
+        <a href="{{ url_for('projects.list_projects', page=projects.prev_num, search=request.args.get('search'), status=request.args.get('status')) }}" class="btn btn-secondary">Poprzednia</a>
+        {% endif %}
+        <span>Strona {{ projects.page }} z {{ projects.pages }}</span>
+        {% if projects.has_next %}
+        <a href="{{ url_for('projects.list_projects', page=projects.next_num, search=request.args.get('search'), status=request.args.get('status')) }}" class="btn btn-secondary">Następna</a>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="card">
+        <p>Brak projektów. <a href="{{ url_for('projects.create_project') }}">Utwórz pierwszy projekt</a></p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

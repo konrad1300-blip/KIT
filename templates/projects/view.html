@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Projekt: {{ project.name }} - KIT{% endblock %}
+
+{% block content %}
+<div class="project-view">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <h1>{{ project.name }}</h1>
+            {% if project.description %}
+            <p class="text-muted">{{ project.description[:100] }}{% if project.description|length > 100 %}...{% endif %}</p>
+            {% endif %}
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{{ url_for('projects.edit_project', project_id=project.id) }}" class="btn btn-secondary">Edytuj projekt</a>
+            <a href="{{ url_for('projects.create_step', project_id=project.id) }}" class="btn btn-success">Dodaj krok</a>
+            <a href="{{ url_for('projects.project_pdf', project_id=project.id) }}" class="btn btn-info">📄 Generuj PDF</a>
+            {% if current_user.has_role('admin') %}
+            {% if project.status != 'archived' %}
+            <form action="{{ url_for('projects.archive_project', project_id=project.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Czy na pewno zarchiwizować projekt?');">
+                <button type="submit" class="btn btn-warning">Archiwizuj</button>
+            </form>
+            {% endif %}
+            <form action="{{ url_for('projects.delete_project', project_id=project.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Czy na pewno usunąć projekt?');">
+                <button type="submit" class="btn btn-danger">Usuń</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Project Info -->
+    <div class="stats-grid" style="margin-bottom: 30px;">
+        <div class="stat-card">
+            <h3>Status</h3>
+            <div class="stat-value">
+                <span class="badge badge-{{ 'success' if project.status == 'completed' else 'warning' if project.status == 'active' else 'secondary' }}">
+                    {{ {
+                        'active': 'Aktywny',
+                        'completed': 'Zakończony',
+                        'archived': 'Archiwum'
+                    }[project.status] }}
+                </span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <h3>Priorytet</h3>
+            <div class="stat-value">
+                <span class="badge priority-{{ project.priority_label }}">{{ project.priority_label|capitalize }}</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <h3>Postęp</h3>
+            <div class="stat-value">{{ project.completion_percentage }}%</div>
+        </div>
+
+        <div class="stat-card">
+            <h3>Liczba kroków</h3>
+            <div class="stat-value">{{ total_steps }}</div>
+        </div>
+    </div>
+
+    <!-- Steps List -->
+    {% if steps %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Kroki projektu</h2>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nazwa</th>
+                        <th>Typ</th>
+                        <th>Przypisane do</th>
+                        <th>Wymagane role</th>
+                        <th>Priorytet</th>
+                        <th>Status</th>
+                        <th>Termin</th>
+                        <th>Akcje</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for step in steps %}
+                    <tr class="{% if step.is_overdue %}overdue{% endif %}">
+                        <td><strong>{{ step.name }}</strong></td>
+                        <td>{{ step.step_type|replace('_', ' ') if step.step_type else '-' }}</td>
+                        <td>{{ step.assignee.full_name if step.assignee else 'Nieprzypisane' }}</td>
+                        <td>
+                            {% for role in step.required_roles %}
+                            <span class="badge badge-info">{{ role.display_name }}</span>
+                            {% else %}
+                            <small class="text-muted">Zespół</small>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <span class="badge priority-{{ step.priority }}">{{ step.priority|replace('_', ' ') }}</span>
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ 'success' if step.status == 'completed' else 'warning' if step.status == 'in_progress' else 'info' }}">
+                                {{ {
+                                    'pending': 'Do zrobienia',
+                                    'in_progress': 'W trakcie',
+                                    'completed': 'Zakończone'
+                                }[step.status] }}
+                            </span>
+                        </td>
+                        <td>
+                            {{ step.due_date.strftime('%Y-%m-%d') if step.due_date else 'Brak terminu' }}
+                            {% if step.is_overdue %}<span class="badge badge-danger">!</span>{% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('steps.view_step', step_id=step.id) }}" class="btn btn-small btn-primary">Szczegóły</a>
+                            <a href="{{ url_for('steps.edit_step', step_id=step.id) }}" class="btn btn-small btn-secondary">Edytuj</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="card-body">
+            <p>Brak kroków w tym projekcie. <a href="{{ url_for('projects.create_step', project_id=project.id) }}">Dodaj pierwszy krok</a></p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Project Details -->
+    <div class="card" style="margin-top: 20px;">
+        <div class="card-header">
+            <h2 class="card-title">Szczegóły projektu</h2>
+        </div>
+        <div class="card-body">
+            <div class="detail-section">
+                <h4>Opis</h4>
+                <p>{{ project.description if project.description else 'Brak opisu' }}</p>
+            </div>
+
+            <div class="detail-section">
+                <h4>Informacje</h4>
+                <table class="info-table">
+                    <tr>
+                        <td><strong>Utworzony:</strong></td>
+                        <td>{{ project.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Utworzony przez:</strong></td>
+                        <td>{{ project.creator.full_name if project.creator else 'Nieznany' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ostatnia aktualizacja:</strong></td>
+                        <td>{{ project.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+        <a href="{{ url_for('projects.list_projects') }}" class="btn btn-secondary">← Powrót do listy</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.info-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.info-table tr {
+    border-bottom: 1px solid #eee;
+}
+
+.info-table td {
+    padding: 10px;
+    vertical-align: top;
+}
+
+.info-table td:first-child {
+    width: 200px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.overdue {
+    background-color: #fff5f5;
+}
+</style>
+{% endblock %}

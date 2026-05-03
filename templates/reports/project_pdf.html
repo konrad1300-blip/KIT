@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raport projektu - {{ project.name }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+            @top-center {
+                content: "Raport projektu";
+                font-size: 10pt;
+            }
+            @bottom-center {
+                content: counter(page) " / " counter(pages);
+                font-size: 10pt;
+            }
+        }
+        
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #2c3e50;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 24pt;
+            color: #2c3e50;
+            margin: 0;
+        }
+        
+        .header .date {
+            color: #7f8c8d;
+            font-size: 11pt;
+            margin-top: 10px;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+            page-break-inside: avoid;
+        }
+        
+        .section h2 {
+            font-size: 16pt;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+            margin: 20px 0 15px 0;
+        }
+        
+        .section h3 {
+            font-size: 13pt;
+            color: #34495e;
+            margin: 15px 0 10px 0;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .info-value {
+            color: #222;
+        }
+        
+        .progress-container {
+            background: #ecf0f1;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .progress-circle {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 20px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .progress-value {
+            font-size: 36pt;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .progress-text {
+            font-size: 11pt;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        .progress-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .progress-stat {
+            text-align: center;
+        }
+        
+        .progress-stat .number {
+            font-size: 20pt;
+            font-weight: bold;
+        }
+        
+        .progress-stat.completed .number { color: #27ae60; }
+        .progress-stat.in-progress .number { color: #3498db; }
+        .progress-stat.pending .number { color: #f39c12; }
+        
+        .progress-stat .label {
+            font-size: 10pt;
+            color: #7f8c8d;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 10pt;
+        }
+        
+        th {
+            background: #2c3e50;
+            color: white;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: bold;
+        }
+        
+        td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        tr:hover {
+            background: #e8f4f8;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 9pt;
+            font-weight: bold;
+        }
+        
+        .status-pending { background: #fef9e7; color: #d68910; }
+        .status-in-progress { background: #d6eaf8; color: #2980b9; }
+        .status-completed { background: #d5f5e3; color: #229954; }
+        
+        .priority-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 9pt;
+            font-weight: bold;
+        }
+        
+        .priority-low { background: #e8f6f3; color: #117a65; }
+        .priority-medium { background: #d6eaf8; color: #2980b9; }
+        .priority-high { background: #fadbd8; color: #cb4335; }
+        .priority-urgent { background: #f5b7b1; color: #943126; }
+        
+        .priority-label {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 10pt;
+            font-weight: bold;
+        }
+        
+        .priority-1 { background: #e8f6f3; color: #117a65; }
+        .priority-2 { background: #d6eaf8; color: #2980b9; }
+        .priority-3 { background: #fadbd8; color: #cb4335; }
+        .priority-4 { background: #f5b7b1; color: #943126; }
+        
+        .project-description {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+            margin: 15px 0;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 9pt;
+            color: #95a5a6;
+            border-top: 1px solid #ecf0f1;
+            padding-top: 15px;
+        }
+        
+        @media print {
+            body { font-size: 11pt; }
+            .header h1 { font-size: 22pt; }
+            table { font-size: 9pt; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ project.name }}</h1>
+        <div class="date">Wygenerowano: {{ datetime.utcnow().strftime('%d.%m.%Y %H:%M') }}</div>
+    </div>
+    
+    <div class="section">
+        <h2>Informacje o projekcie</h2>
+        <div class="info-grid">
+            <div class="info-label">Status:</div>
+            <div class="info-value">{{ project.status }}</div>
+            
+            <div class="info-label">Priorytet:</div>
+            <div class="info-value">
+                <span class="priority-label priority-{{ project.priority }}">
+                    {{ project.priority_label|capitalize }}
+                </span>
+            </div>
+            
+            <div class="info-label">Utworzony:</div>
+            <div class="info-value">{{ project.created_at.strftime('%d.%m.%Y') }}</div>
+            
+            {% if project.due_date %}
+            <div class="info-label">Termin:</div>
+            <div class="info-value">{{ project.due_date.strftime('%d.%m.%Y') }}</div>
+            {% endif %}
+            
+            <div class="info-label">Utworzony przez:</div>
+            <div class="info-value">{{ project.creator.full_name if project.creator else 'N/A' }}</div>
+            
+            <div class="info-label">Szablon:</div>
+            <div class="info-value">{{ project.project_template.name if project.project_template else 'Brak' }}</div>
+        </div>
+        
+        {% if project.description %}
+        <h3>Opis</h3>
+        <div class="project-description">
+            {{ project.description }}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="section">
+        <h2>Postęp realizacji</h2>
+        <div class="progress-container">
+            <div class="progress-circle">
+                <div>
+                    <div class="progress-value">{{ completion_pct }}%</div>
+                    <div class="progress-text">ukończono</div>
+                </div>
+            </div>
+            
+            <div class="progress-stats">
+                <div class="progress-stat completed">
+                    <div class="number">{{ completed }}</div>
+                    <div class="label">Zakończone</div>
+                </div>
+                <div class="progress-stat in-progress">
+                    <div class="number">{{ in_progress }}</div>
+                    <div class="label">W trakcie</div>
+                </div>
+                <div class="progress-stat pending">
+                    <div class="number">{{ pending }}</div>
+                    <div class="label">Do zrobienia</div>
+                </div>
+            </div>
+        </div>
+        
+        <p><strong>Razem zadań:</strong> {{ total }}</p>
+    </div>
+    
+    {% if steps %}
+    <div class="section">
+        <h2>Lista zadań</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Nazwa</th>
+                    <th>Typ</th>
+                    <th>Przypisany</th>
+                    <th>Status</th>
+                    <th>Priorytet</th>
+                    <th>Termin</th>
+                    <th>Czas (min)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for step in steps %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ step.name }}</td>
+                    <td>{{ step.step_type or '-' }}</td>
+                    <td>{{ step.assignee.full_name if step.assignee else 'Nieprzypisane' }}</td>
+                    <td>
+                        <span class="status-badge status-{{ step.status }}">
+                            {{ step.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="priority-badge priority-{{ step.priority }}">
+                            {{ step.priority }}
+                        </span>
+                    </td>
+                    <td>{{ step.due_date.strftime('%d.%m.%Y') if step.due_date else '-' }}</td>
+                    <td>{{ step.estimated_time or '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    <div class="footer">
+        <p>Raport wygenerowany automatycznie | KIT - zen</p>
+        <p>Strona {{ page }} z {{ pages }}</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Błąd serwera - KIT{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <h1>500</h1>
+    <h2>Błąd serwera</h2>
+    <p>Przepraszamy, wystąpił nieoczekiwany błąd. Nasz zespół został powiadomiony.</p>
+    <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary">Powrót do pulpitu</a>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.error-page {
+    text-align: center;
+    padding: 50px 20px;
+}
+
+.error-page h1 {
+    font-size: 6rem;
+    color: #e74c3c;
+    margin: 0;
+}
+
+.error-page h2 {
+    font-size: 2rem;
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+.error-page p {
+    font-size: 1.2rem;
+    color: #666;
+    margin-bottom: 30px;
+}
+</style>
+{% endblock %}

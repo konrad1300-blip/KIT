@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raport zespoły - KIT</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+            @top-center {
+                content: "Raport zespołowy";
+                font-size: 10pt;
+            }
+            @bottom-center {
+                content: counter(page) " / " counter(pages);
+                font-size: 10pt;
+            }
+        }
+        
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #2c3e50;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 24pt;
+            color: #2c3e50;
+            margin: 0;
+        }
+        
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 12pt;
+            margin-top: 5px;
+        }
+        
+        .overview-cards {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .overview-card {
+            flex: 1;
+            min-width: 180px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+        }
+        
+        .overview-card .number {
+            font-size: 32pt;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .overview-card .label {
+            font-size: 11pt;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        .overview-card.warning .number { color: #e67e22; }
+        .overview-card.danger .number { color: #e74c3c; }
+        
+        .user-section {
+            margin: 30px 0;
+            page-break-inside: avoid;
+            border: 1px solid #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .user-header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+        }
+        
+        .user-header h3 {
+            margin: 0;
+            font-size: 14pt;
+        }
+        
+        .user-stats {
+            display: flex;
+            gap: 20px;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            flex-wrap: wrap;
+        }
+        
+        .user-stat {
+            text-align: center;
+        }
+        
+        .user-stat .value {
+            font-size: 20pt;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .user-stat .label {
+            font-size: 10pt;
+            color: #7f8c8d;
+        }
+        
+        .user-stat.warning .value { color: #e67e22; }
+        .user-stat.danger .value { color: #e74c3c; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0 20px 0;
+            font-size: 10pt;
+        }
+        
+        th {
+            background: #2c3e50;
+            color: white;
+            padding: 10px 8px;
+            text-align: left;
+            font-weight: bold;
+        }
+        
+        td {
+            padding: 8px 8px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        tr:nth-child(even) { background: #f8f9fa; }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 8pt;
+            font-weight: bold;
+        }
+        
+        .status-pending { background: #fef9e7; color: #d68910; }
+        .status-in-progress { background: #d6eaf8; color: #2980b9; }
+        .status-completed { background: #d5f5e3; color: #229954; }
+        
+        .priority-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 8pt;
+            font-weight: bold;
+        }
+        
+        .priority-low { background: #e8f6f3; color: #117a65; }
+        .priority-normal { background: #d6eaf8; color: #2980b9; }
+        .priority-high { background: #fadbd8; color: #cb4335; }
+        .priority-urgent { background: #f5b7b1; color: #943126; }
+        
+        .no-tasks {
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+            padding: 20px;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 9pt;
+            color: #95a5a6;
+            border-top: 1px solid #ecf0f1;
+            padding-top: 15px;
+        }
+        
+        @media print {
+            body { font-size: 11pt; }
+            .header h1 { font-size: 22pt; }
+            table { font-size: 9pt; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Raport zespołowy</h1>
+        <div class="subtitle">Podsumowanie obciążenia zespołu</div>
+        <div class="subtitle">Wygenerowano: {{ report_date.strftime('%d.%m.%Y %H:%M') }}</div>
+    </div>
+    
+    <div class="overview-cards">
+        <div class="overview-card">
+            <div class="number">{{ total_open_steps }}</div>
+            <div class="label">Otwartych zadań</div>
+        </div>
+        <div class="overview-card warning">
+            <div class="number">{{ total_overdue }}</div>
+            <div class="label">Opóźnionych</div>
+        </div>
+    </div>
+    
+    {% for member in team_data %}
+    <div class="user-section">
+        <div class="user-header">
+            <h3>{{ member.user.full_name }} ({{ member.user.username }})</h3>
+        </div>
+        <div class="user-stats">
+            <div class="user-stat">
+                <div class="value">{{ member.open_count }}</div>
+                <div class="label">Otwartych</div>
+            </div>
+            <div class="user-stat">
+                <div class="value">{{ member.completed_count }}</div>
+                <div class="label">Zakończonych</div>
+            </div>
+            <div class="user-stat {{ 'warning' if member.overdue_count > 0 else '' }}">
+                <div class="value">{{ member.overdue_count }}</div>
+                <div class="label">Opóźnionych</div>
+            </div>
+            <div class="user-stat {{ 'danger' if member.total_time > 2400 else '' }}">
+                <div class="value">{{ member.total_time // 60 if member.total_time >= 60 else member.total_time }}</div>
+                <div class="label">{{ 'h' if member.total_time >= 60 else 'm' }} obciążenia</div>
+            </div>
+        </div>
+        
+        {% if member.open_steps %}
+        <h4 style="padding: 10px 20px; margin: 0; background: #f8f9fa; font-size: 12pt;">Otwarte zadania</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Zadanie</th>
+                    <th>Projekt</th>
+                    <th>Status</th>
+                    <th>Priorytet</th>
+                    <th>Termin</th>
+                    <th>Czas (min)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for step in member.open_steps %}
+                <tr>
+                    <td>{{ step.name }}</td>
+                    <td>{{ step.project.name if step.project else '-' }}</td>
+                    <td>
+                        <span class="status-badge status-{{ step.status }}">
+                            {{ step.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="priority-badge priority-{{ step.priority }}">
+                            {{ step.priority }}
+                        </span>
+                    </td>
+                    <td>{{ step.due_date.strftime('%d.%m.%Y') if step.due_date else '-' }}</td>
+                    <td>{{ step.estimated_time or '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        
+        {% if member.overdue_steps %}
+        <h4 style="padding: 10px 20px; margin: 0; background: #fadbd8; font-size: 12pt;">Zadania opóźnione</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Zadanie</th>
+                    <th>Projekt</th>
+                    <th>Status</th>
+                    <th>Priorytet</th>
+                    <th>Planowany termin</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for step in member.overdue_steps %}
+                <tr>
+                    <td>{{ step.name }}</td>
+                    <td>{{ step.project.name if step.project else '-' }}</td>
+                    <td>
+                        <span class="status-badge status-{{ step.status }}">
+                            {{ step.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="priority-badge priority-{{ step.priority }}">
+                            {{ step.priority }}
+                        </span>
+                    </td>
+                    <td>{{ step.due_date.strftime('%d.%m.%Y') if step.due_date else '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        
+        {% if not member.open_steps and not member.overdue_steps %}
+        <div class="no-tasks">Brak zadań</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+    
+    <div class="footer">
+        <p>Raport wygenerowany automatycznie | KIT - zen</p>
+        <p>Strona {{ page }} z {{ pages }}</p>
+    </div>
+</body>
+</html>

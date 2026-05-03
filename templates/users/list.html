@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Użytkownicy - KIT{% endblock %}
+
+{% block content %}
+<div class="users-index">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1>Użytkownicy</h1>
+        <div style="display: flex; gap: 10px;">
+            {% if current_user.has_role('admin') %}
+            <a href="{{ url_for('users.export_users') }}" class="btn btn-info">📊 Eksport do Excel</a>
+            <a href="{{ url_for('users.import_users') }}" class="btn btn-warning">📥 Import z Excel</a>
+            <a href="{{ url_for('users.create_user') }}" class="btn btn-success">Dodaj użytkownika</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Użytkownik</th>
+                <th>Email</th>
+                <th>Rola</th>
+                <th>Umiejętności</th>
+                <th>Status</th>
+                <th>Zadania</th>
+                <th>Akcje</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>
+                    <strong>{{ user.full_name }}</strong><br>
+                    <small class="text-muted">@{{ user.username }}</small>
+                </td>
+                <td>{{ user.email }}</td>
+                <td>
+                    {% for role in user.roles %}
+                    <span class="badge badge-{{ 'primary' if role.name == 'admin' else 'secondary' if role.name == 'zespół' else 'info' }}">
+                        {{ role.display_name }}
+                    </span>
+                    {% else %}
+                    <span class="text-muted">Brak ról</span>
+                    {% endfor %}
+                </td>
+                <td>
+                    {% for skill in user.skills.all() %}
+                    <span class="badge badge-info" title="{{ skill.description or '' }}">{{ skill.name }}</span>
+                    {% else %}
+                    <span class="text-muted">Brak umiejętności</span>
+                    {% endfor %}
+                </td>
+                <td>
+                    {% if user.is_active %}
+                    <span class="badge badge-success">Aktywny</span>
+                    {% else %}
+                    <span class="badge badge-danger">Nieaktywny</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ url_for('users.view_user', user_id=user.id) }}" class="btn btn-small btn-secondary">Zobacz</a>
+                    <a href="{{ url_for('users.edit_user', user_id=user.id) }}" class="btn btn-small btn-primary">Edytuj</a>
+                    <form method="POST" action="{{ url_for('users.toggle_active', user_id=user.id) }}" style="display: inline;" onsubmit="return confirm('Czy na pewno chcesz zmienić status tego użytkownika?');">
+                        <button type="submit" class="btn btn-small {% if user.is_active %}btn-warning{% else %}btn-success{% endif %}">
+                            {{ 'Dezaktywuj' if user.is_active else 'Aktywuj' }}
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

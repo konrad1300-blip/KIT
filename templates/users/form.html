@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edytuj' if user else 'Nowy' }} użytkownik - KIT{% endblock %}
+
+{% block content %}
+<div class="user-form">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">{{ 'Edytuj użytkownika' if user else 'Nowy użytkownik' }}</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('users.create_user') if not user else url_for('users.edit_user', user_id=user.id) }}">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="first_name">Imię</label>
+                        <input type="text" name="first_name" id="first_name" class="form-control" value="{{ user.first_name if user else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="last_name">Nazwisko</label>
+                        <input type="text" name="last_name" id="last_name" class="form-control" value="{{ user.last_name if user else '' }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="username">Nazwa użytkownika *</label>
+                    <input type="text" name="username" id="username" class="form-control" value="{{ user.username if user else '' }}" required {% if user %}readonly{% endif %}>
+                    {% if user %}<small class="form-text text-muted">Nazwę użytkownika nie można zmienić.</small>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="email">Email *</label>
+                    <input type="email" name="email" id="email" class="form-control" value="{{ user.email if user else '' }}" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="password">
+                            {{ 'Nowe hasło' if user else 'Hasło' }}
+                            {% if not user %}(min. 6 znaków){% endif %}
+                        </label>
+                        <input type="password" name="password" id="password" class="form-control" {% if not user %}required{% endif %}>
+                        {% if user %}<small class="form-text text-muted">Pozostaw puste, aby nie zmieniać hasła.</small>{% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="confirm_password">Potwierdź hasło</label>
+                        <input type="password" name="confirm_password" id="confirm_password" class="form-control" {% if not user %}required{% endif %}>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Role</label>
+                    <div class="roles-grid">
+                        {% for role in roles_list %}
+                        <div class="role-checkbox">
+                            <input type="checkbox" name="roles" id="role_{{ role.id }}" value="{{ role.id }}" {% if user and role in user.roles %}checked{% endif %}>
+                            <label for="role_{{ role.id }}">{{ role.display_name }}</label>
+                            <small>{{ role.description }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Umiejętności</label>
+                    <div class="skills-grid">
+                        {% for skill in skills %}
+                        <div class="skill-checkbox">
+                            <input type="checkbox" name="skills" id="skill_{{ skill.id }}" value="{{ skill.id }}" {% if user and skill in user.skills %}checked{% endif %}>
+                            <label for="skill_{{ skill.id }}">{{ skill.name }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary">{{ 'Zapisz zmiany' if user else 'Utwórz użytkownika' }}</button>
+                    <a href="{{ url_for('users.list_users') }}" class="btn btn-secondary">Anuluj</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if user %}
+<div class="card" style="margin-top: 20px;">
+    <div class="card-header">
+        <h3>Zarządzanie umiejętnościami</h3>
+    </div>
+    <div class="card-body">
+        <div class="skills-manager">
+            <p>Dodaj lub usuń umiejętności użytkownika:</p>
+            <div class="user-skills">
+                {% for skill in user.skills.all() %}
+                <span class="skill-tag">
+                    {{ skill.name }}
+                    <form method="POST" action="{{ url_for('users.remove_skill', user_id=user.id, skill_id=skill.id) }}" style="display: inline;">
+                        <button type="submit" class="skill-remove" title="Usuń umiejętność">×</button>
+                    </form>
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.roles-grid, .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    margin-top: 5px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.role-checkbox, .skill-checkbox {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.role-checkbox small, .skill-checkbox small {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-left: 18px;
+}
+
+.role-checkbox input[type="checkbox"], .skill-checkbox input[type="checkbox"] {
+    margin: 0;
+    width: auto;
+}
+
+.user-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.skill-tag {
+    display: inline-flex;
+    align-items: center;
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+}
+
+.skill-remove {
+    background: none;
+    border: none;
+    color: #f44336;
+    font-size: 1.2rem;
+    cursor: pointer;
+    margin-left: 5px;
+    padding: 0;
+    line-height: 1;
+}
+
+.skill-remove:hover {
+    color: #d32f2f;
+}
+</style>
+{% endblock %}

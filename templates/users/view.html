@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Profil {{ user.full_name }} - KIT{% endblock %}
+
+{% block content %}
+<div class="user-view">
+    <div class="card">
+        <div class="card-header">
+            <h1>{{ user.full_name }}</h1>
+            {% if current_user.has_role('admin') and current_user.id != user.id %}
+            <div style="display: flex; gap: 10px;">
+                <a href="{{ url_for('users.edit_user', user_id=user.id) }}" class="btn btn-secondary">Edytuj</a>
+                <form method="POST" action="{{ url_for('users.toggle_active', user_id=user.id) }}" style="display: inline;" onsubmit="return confirm('Czy na pewno chcesz zmienić status tego użytkownika?');">
+                    <button type="submit" class="btn {% if user.is_active %}btn-warning{% else %}btn-success{% endif %}">
+                        {{ 'Dezaktywuj' if user.is_active else 'Aktywuj' }}
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <div class="user-info">
+                <div class="info-group">
+                    <strong>Nazwa użytkownika:</strong> {{ user.username }}
+                </div>
+                <div class="info-group">
+                    <strong>Email:</strong> {{ user.email }}
+                </div>
+                <div class="info-group">
+                    <strong>Role:</strong>
+                    {% for role in user.roles %}
+                    <span class="badge badge-{{ 'primary' if role.name == 'admin' else 'secondary' if role.name == 'zespół' else 'info' }}">{{ role.display_name }}</span>
+                    {% else %}
+                    <span class="text-muted">Brak ról</span>
+                    {% endfor %}
+                </div>
+                <div class="info-group">
+                    <strong>Status:</strong>
+                    <span class="badge badge-{{ 'success' if user.is_active else 'danger' }}">{{ 'Aktywny' if user.is_active else 'Nieaktywny' }}</span>
+                </div>
+                <div class="info-group">
+                    <strong>Dołączył:</strong> {{ user.created_at.strftime('%Y-%m-%d') }}
+                </div>
+            </div>
+
+            <div class="user-skills-section" style="margin-top: 20px;">
+                <h3>Umiejętności</h3>
+                {% if user.skills.count() > 0 %}
+                <div class="skills-list">
+                    {% for skill in user.skills.all() %}
+                    <span class="badge badge-info">{{ skill.name }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">Brak przypisanych umiejętności.</p>
+                {% endif %}
+            </div>
+
+            <div class="user-stats" style="margin-top: 30px;">
+                <h3>Statystyki zadań</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h4>Przypisane</h4>
+                        <div class="stat-value">{{ assigned_steps|length }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Do zrobienia</h4>
+                        <div class="stat-value">{{ assigned_steps|selectattr('status', 'equalto', 'pending')|list|length }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>W trakcie</h4>
+                        <div class="stat-value">{{ assigned_steps|selectattr('status', 'equalto', 'in_progress')|list|length }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Zakończone</h4>
+                        <div class="stat-value">{{ assigned_steps|selectattr('status', 'equalto', 'completed')|list|length }}</div>
+                    </div>
+                </div>
+            </div>
+
+            {% if assigned_steps %}
+            <div class="user-assigned-steps" style="margin-top: 30px;">
+                <h3>Przypisane zadania</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nazwa</th>
+                            <th>Projekt</th>
+                            <th>Termin</th>
+                            <th>Priorytet</th>
+                            <th>Status</th>
+                            <th>Akcje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for step in assigned_steps %}
+                        <tr class="{% if step.is_overdue %}overdue{% endif %}">
+                            <td>{{ step.name }}</td>
+                            <td>{{ step.project.name if step.project else '-' }}</td>
+                            <td>{{ step.due_date.strftime('%Y-%m-%d') if step.due_date else 'Brak' }}</td>
+                            <td><span class="badge priority-{{ step.priority }}">{{ step.priority|replace('_', ' ') }}</span></td>
+                            <td>
+                                <span class="badge badge-{{ 'success' if step.status == 'completed' else 'warning' if step.status == 'in_progress' else 'info' }}">
+                                    {{ step.status|replace('_', ' ') }}
+                                </span>
+                            </td>
+                            <td><a href="{{ url_for('steps.view_step', step_id=step.id) }}" class="btn btn-small btn-primary">Zobacz</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+        <a href="{{ url_for('users.list_users') }}" class="btn btn-secondary">← Powrót do listy użytkowników</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.user-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.info-group {
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.user-skills-section .skills-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+</style>
+{% endblock %}

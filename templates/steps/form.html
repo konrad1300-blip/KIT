@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edytuj' if step else 'Nowe' }} zadanie - KIT{% endblock %}
+
+{% block content %}
+<div class="step-form">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">{{ 'Edytuj zadanie' if step else 'Nowe zadanie' }}</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('steps.edit_step', step_id=step.id) if step else url_for('steps.create_step') }}">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="name">Nazwa kroku *</label>
+                        <input type="text" name="name" id="name" class="form-control" value="{{ step.name if step else '' }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="step_type">Typ kroku</label>
+                        <select name="step_type" id="step_type" class="form-control">
+                            <option value="">-- Wybierz typ --</option>
+                            <option value="model_implementation" {% if step and step.step_type == 'model_implementation' %}selected{% endif %}>Wykonanie modelu - wdrożeniowiec</option>
+                            <option value="sharepoint_confirmation" {% if step and step.step_type == 'sharepoint_confirmation' %}selected{% endif %}>Potwierdzenie w ZS i Microsoft SharePoint - technolog</option>
+                            <option value="illustration_technologist" {% if step and step.step_type == 'illustration_technologist' %}selected{% endif %}>Wykonanie ilustracji - technolog</option>
+                            <option value="illustration_designer" {% if step and step.step_type == 'illustration_designer' %}selected{% endif %}>Wykonanie ilustracji - konstruktor</option>
+                            <option value="bom_preparation" {% if step and step.step_type == 'bom_preparation' %}selected{% endif %}>Przygotowanie wyceny - technolog</option>
+                            <option value="other" {% if step and step.step_type == 'other' %}selected{% endif %}>Inny</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="description">Opis</label>
+                    <textarea name="description" id="description" class="form-control" rows="3">{{ step.description if step else '' }}</textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="project_id">Projekt</label>
+                        <select name="project_id" id="project_id" class="form-control">
+                            <option value="">-- Bez projektu --</option>
+                            {% for project in projects %}
+                            <option value="{{ project.id }}" {% if step and step.project_id == project.id %}selected{% endif %}>{{ project.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="assigned_to">Przypisane do</label>
+                        <select name="assigned_to" id="assigned_to" class="form-control">
+                            <option value="">-- Wybierz użytkownika --</option>
+                            {% for user in users %}
+                            <option value="{{ user.id }}" {% if step and step.assigned_to == user.id %}selected{% endif %}>
+                                {{ user.full_name }} ({{ user.username }})
+                                 {% if current_user.has_role('admin') and user.roles|length > 0 %}
+                                 - Ról: {{ user.roles|map(attribute='display_name')|join(', ') }}
+                                {% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Wymagane role</label>
+                    <div class="roles-grid">
+                        {% for role in roles %}
+                        <div class="role-checkbox">
+                            <input type="checkbox" name="required_roles" id="req_role_{{ role.id }}" value="{{ role.id }}" {% if step and role in step.required_roles %}checked{% endif %}>
+                            <label for="req_role_{{ role.id }}">{{ role.display_name }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <small class="form-text text-muted">
+                        Jeśli nie wybrano żadnych ról, każde użytkownik może wykonać zadanie (tryb "Zespół").
+                    </small>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="estimated_time">Szacowany czas (minuty)</label>
+                        <input type="number" name="estimated_time" id="estimated_time" class="form-control" value="{{ step.estimated_time if step else '' }}" min="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="due_date">Termin wykonania</label>
+                        <input type="date" name="due_date" id="due_date" class="form-control" value="{{ step.due_date.strftime('%Y-%m-%d') if step and step.due_date else '' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="priority">Priorytet</label>
+                        <select name="priority" id="priority" class="form-control">
+                            <option value="normal" {% if step and step.priority == 'normal' %}selected{% endif %}>Normalny</option>
+                            <option value="high" {% if step and step.priority == 'high' %}selected{% endif %}>Wysoki</option>
+                            <option value="urgent" {% if step and step.priority == 'urgent' %}selected{% endif %}>Pilny (do końca dnia)</option>
+                            <option value="very_urgent" {% if step and step.priority == 'very_urgent' %}selected{% endif %}>Bardzo pilny (natychmiast)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="status">Status</label>
+                    <select name="status" id="status" class="form-control">
+                        <option value="pending" {% if step and step.status == 'pending' %}selected{% endif %}>Do zrobienia</option>
+                        <option value="in_progress" {% if step and step.status == 'in_progress' %}selected{% endif %}>W trakcie</option>
+                        <option value="completed" {% if step and step.status == 'completed' %}selected{% endif %}>Zakończone</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="notes">Notatki</label>
+                    <textarea name="notes" id="notes" class="form-control" rows="3">{{ step.notes if step else '' }}</textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary">{{ 'Zapisz zmiany' if step else 'Utwórz zadanie' }}</button>
+                    {% if step %}
+                    <form method="POST" action="{{ url_for('steps.delete_step', step_id=step.id) }}" onsubmit="return confirm('Czy na pewno chcesz usunąć to zadanie?');">
+                        <button type="submit" class="btn btn-danger">Usuń</button>
+                    </form>
+                    {% endif %}
+                    <a href="{{ url_for('steps.list_steps') }}" class="btn btn-secondary">Anuluj</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+.roles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    margin-top: 5px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.role-checkbox {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.role-checkbox input[type="checkbox"] {
+    margin: 0;
+    width: auto;
+}
+</style>
+{% endblock %}
+{% endblock %}

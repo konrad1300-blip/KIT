@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edytuj' if template else 'Nowy' }} szablon kroku - KIT{% endblock %}
+
+{% block content %}
+<div class="step-template-form">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">{{ 'Edytuj szablon kroku' if template else 'Nowy szablon kroku' }}</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('step_templates.edit_template', template_id=template.id) if template else url_for('step_templates.create_template') }}">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="name">Nazwa szablonu *</label>
+                        <input type="text" name="name" id="name" class="form-control" value="{{ template.name if template else '' }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="step_type">Typ kroku</label>
+                        <select name="step_type" id="step_type" class="form-control">
+                            <option value="">-- Wybierz typ --</option>
+                            <option value="model_implementation" {% if template and template.step_type == 'model_implementation' %}selected{% endif %}>Wykonanie modelu - wdrożeniowiec</option>
+                            <option value="sharepoint_confirmation" {% if template and template.step_type == 'sharepoint_confirmation' %}selected{% endif %}>Potwierdzenie w ZS i Microsoft SharePoint - technolog</option>
+                            <option value="illustration_technologist" {% if template and template.step_type == 'illustration_technologist' %}selected{% endif %}>Wykonanie ilustracji - technolog</option>
+                            <option value="illustration_designer" {% if template and template.step_type == 'illustration_designer' %}selected{% endif %}>Wykonanie ilustracji - konstruktor</option>
+                            <option value="bom_preparation" {% if template and template.step_type == 'bom_preparation' %}selected{% endif %}>Przygotowanie wyceny - technolog</option>
+                            <option value="other" {% if template and template.step_type == 'other' %}selected{% endif %}>Inny</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="description">Opis</label>
+                    <textarea name="description" id="description" class="form-control" rows="3">{{ template.description if template else '' }}</textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="priority">Priorytet</label>
+                        <select name="priority" id="priority" class="form-control">
+                            <option value="normal" {% if template and template.priority == 'normal' %}selected{% endif %}>Normalny</option>
+                            <option value="high" {% if template and template.priority == 'high' %}selected{% endif %}>Wysoki</option>
+                            <option value="urgent" {% if template and template.priority == 'urgent' %}selected{% endif %}>Pilny (do końca dnia)</option>
+                            <option value="very_urgent" {% if template and template.priority == 'very_urgent' %}selected{% endif %}>Bardzo pilny (natychmiast)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="estimated_time">Szacowany czas (minuty)</label>
+                        <input type="number" name="estimated_time" id="estimated_time" class="form-control" value="{{ template.estimated_time if template else '' }}" min="0">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="skills">Wymagane umiejętności</label>
+                    <select name="skills" id="skills" class="form-control" multiple size="5">
+                        {% for skill in skills %}
+                        <option value="{{ skill.id }}" {% if template and skill in template.required_skills %}selected{% endif %}>{{ skill.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="form-text text-muted">Przytrzymaj Ctrl (lub Cmd na Mac) aby wybrać wiele opcji</small>
+                </div>
+
+                {% if template %}
+                <div class="form-group form-check">
+                    <input type="checkbox" name="is_active" id="is_active" class="form-check-input" {% if template.is_active %}checked{% endif %}>
+                    <label class="form-check-label" for="is_active">Aktywny szablon</label>
+                </div>
+                {% endif %}
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary">{{ 'Zapisz zmiany' if template else 'Utwórz szablon' }}</button>
+                    {% if template %}
+                    <a href="{{ url_for('step_templates.list_templates') }}" class="btn btn-secondary">Anuluj</a>
+                    {% else %}
+                    <a href="{{ url_for('step_templates.list_templates') }}" class="btn btn-secondary">Anuluj</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Bootstrap multi-select if needed
+        var select = document.getElementById('skills');
+        if (select) {
+            // You can add a plugin like bootstrap-select here if desired
+            // For now, we'll use the native multiple select
+        }
+    });
+</script>
+{% endblock %}

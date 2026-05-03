@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}Raporty - KIT{% endblock %}
+
+{% block content %}
+<div class="reports-index">
+    <div class="report-header">
+        <h1>📊 Raporty i eksporty</h1>
+        <p class="subtitle">Generuj profesjonalne raporty PDF oraz eksportuj dane do Excel</p>
+    </div>
+    
+    <div class="reports-grid">
+        <!-- Raporty projektów -->
+        <div class="report-card">
+            <div class="report-icon">📄</div>
+            <h3>Raport projektu</h3>
+            <p>Profesjonalny raport PDF ze szczegółami, zadaniami i wykresem postępu dla wybranego projektu.</p>
+            <div class="report-actions">
+                <p class="hint">Dostępne z widoku projektu (przycisk "Generuj PDF")</p>
+            </div>
+        </div>
+        
+        <!-- Raporty użytkowników -->
+        <div class="report-card">
+            <div class="report-icon">📅</div>
+            <h3>Raporty indywidualne</h3>
+            <p>Tygodniowe i miesięczne raporty PDF z listą wykonanych zadań i czasem pracy.</p>
+            <div class="report-actions">
+                <div class="user-select">
+                    <select id="userSelect" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc; margin: 5px 0;">
+                        {% for user in users %}
+                        <option value="{{ user.id }}">{{ user.full_name }} ({{ user.username }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <a href="#" onclick="generateUserReport('weekly')" class="btn btn-secondary">Tygodniowy PDF</a>
+                <a href="#" onclick="generateUserReport('monthly')" class="btn btn-secondary">Miesięczny PDF</a>
+            </div>
+        </div>
+        
+        <!-- Raport zespołu -->
+        <div class="report-card">
+            <div class="report-icon">👥</div>
+            <h3>Raport zespołowy</h3>
+            <p>Kompleksowy raport PDF dla admina: podsumowanie obciążenia, opóźnienia, wydajność całego zespołu.</p>
+            <div class="report-actions">
+                <a href="{{ url_for('reports.team_pdf_reports') }}" class="btn btn-primary">Generuj PDF</a>
+            </div>
+        </div>
+        
+        <!-- Eksporty Excel -->
+        <div class="report-card excel">
+            <div class="report-icon">📊</div>
+            <h3>Eksport do Excel</h3>
+            <p>Eksportuj projekty, zadania i użytkowników do plików Excel z zachowaniem formatowania i danych.</p>
+            <div class="report-actions">
+                <a href="{{ url_for('projects.export_projects') }}" class="btn btn-success">Projekty</a>
+                <a href="{{ url_for('steps.export_steps') }}" class="btn btn-success">Zadania</a>
+                <a href="{{ url_for('users.export_users') }}" class="btn btn-success">Użytkownicy</a>
+            </div>
+        </div>
+        
+        <!-- Import z Excel -->
+        <div class="report-card import">
+            <div class="report-icon">📥</div>
+            <h3>Import z Excel</h3>
+            <p>Masowe importowanie projektów, zadań i użytkowników z plików Excel z obsługą błędów.</p>
+            <div class="report-actions">
+                <a href="{{ url_for('projects.import_projects') }}" class="btn btn-warning">Importuj projekty</a>
+                <a href="{{ url_for('steps.import_steps') }}" class="btn btn-warning">Importuj zadania</a>
+                <a href="{{ url_for('users.import_users') }}" class="btn btn-warning">Importuj użytkowników</a>
+            </div>
+        </div>
+        
+        <!-- Szablony -->
+        <div class="report-card template">
+            <div class="report-icon">📋</div>
+            <h3>Szablony Excel</h3>
+            <p>Pobierz gotowe szablony Excel do ułatwienia procesu importu danych do systemu.</p>
+            <div class="report-actions">
+                <a href="/import/template/projects" class="btn btn-info">Projekty</a>
+                <a href="/import/template/steps" class="btn btn-info">Zadania</a>
+                <a href="/import/template/users" class="btn btn-info">Użytkownicy</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function generateUserReport(type) {
+    const userId = document.getElementById('userSelect').value;
+    let url;
+    if (type === 'weekly') {
+        url = `/user/${userId}/weekly-pdf`;
+    } else {
+        url = `/user/${userId}/monthly-pdf`;
+    }
+    window.location.href = url;
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.reports-index {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.report-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.report-header h1 {
+    font-size: 2.5rem;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.report-header .subtitle {
+    color: #7f8c8d;
+    font-size: 1.1rem;
+    margin-top: 10px;
+}
+
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.report-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-top: 4px solid #3498db;
+}
+
+.report-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+}
+
+.report-card.excel { border-color: #27ae60; }
+.report-card.import { border-color: #e67e22; }
+.report-card.template { border-color: #9b59b6; }
+
+.report-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.report-card h3 {
+    font-size: 1.3rem;
+    color: #2c3e50;
+    margin: 0 0 10px 0;
+}
+
+.report-card p {
+    color: #555;
+    line-height: 1.6;
+    margin: 0 0 15px 0;
+    font-size: 0.95rem;
+}
+
+.report-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.report-card .hint {
+    font-size: 0.85rem;
+    color: #7f8c8d;
+    font-style: italic;
+    margin: 5px 0;
+}
+
+.user-select {
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.user-select select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 0.9rem;
+}
+
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: #3498db;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #2980b9;
+}
+
+.btn-secondary {
+    background: #95a5a6;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #7f8c8d;
+}
+
+.btn-success {
+    background: #27ae60;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #229954;
+}
+
+.btn-warning {
+    background: #e67e22;
+    color: white;
+}
+
+.btn-warning:hover {
+    background: #d35400;
+}
+
+.btn-info {
+    background: #9b59b6;
+    color: white;
+}
+
+.btn-info:hover {
+    background: #8e44ad;
+}
+
+@media (max-width: 768px) {
+    .reports-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .report-header h1 {
+        font-size: 2rem;
+    }
+}
+</style>
+{% endblock %}

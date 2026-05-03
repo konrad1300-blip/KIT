@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Szablony kroków - KIT{% endblock %}
+
+{% block content %}
+<div class="step-templates">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Szablony kroków</h2>
+            <div class="card-actions">
+                <a href="{{ url_for('step_templates.create_template') }}" class="btn btn-success">Nowy szablon</a>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if templates %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nazwa</th>
+                            <th>Typ kroku</th>
+                            <th>Priorytet</th>
+                            <th>Szacowany czas</th>
+                            <th>Umiejętności</th>
+                            <th>Data utworzenia</th>
+                            <th>Działania</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for template in templates %}
+                        <tr>
+                            <td>
+                                <strong>{{ template.name }}</strong>
+                                {% if template.description %}
+                                <br><small class="text-muted">{{ template.description }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if template.step_type %}
+                                <span class="badge bg-info">{{ template.step_type }}</span>
+                                {% else %}
+                                <span class="text-muted">--</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% set priority_colors = {'normal': 'secondary', 'high': 'warning', 'urgent': 'danger', 'very_urgent': 'dark'} %}
+                                <span class="badge bg-{{ priority_colors.get(template.priority, 'secondary') }}">
+                                    {{ template.priority|capitalize }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ template.estimated_time or '--' }} min
+                            </td>
+                            <td>
+                                {% if template.required_skills %}
+                                <div class="skill-tags">
+                                    {% for skill in template.required_skills %}
+                                    <span class="badge bg-light text-dark me-1 mb-1">{{ skill.name }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <span class="text-muted">--</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ template.created_at.strftime('%d.%m.%Y') }}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('step_templates.edit_template', template_id=template.id) }}" class="btn btn-sm btn-outline-primary">Edytuj</a>
+                                    <form method="POST" action="{{ url_for('step_templates.delete_template', template_id=template.id) }}" onsubmit="return confirm('Czy na pewno chcesz usunąć ten szablon?');" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Usuń</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                Brak dostępnych szablonów kroków. Utwórz pierwszy szablon, aby zacząć.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+    .skill-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+</style>
+{% endblock %}

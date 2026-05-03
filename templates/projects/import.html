@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Import projektów - KIT{% endblock %}
+
+{% block content %}
+<div class="import-page">
+    <div class="card">
+        <div class="card-header">
+            <h1>Import projektów z Excela</h1>
+        </div>
+        <div class="card-body">
+            <div class="import-info">
+                <p>Wgraj plik Excel z projektami, aby je zaimportować do systemu. Istniejące projekty zostaną zaktualizowane na podstawie nazwy.</p>
+                
+                <div class="import-steps">
+                    <h3>Format pliku:</h3>
+                    <ul>
+                        <li>Plik musi być w formacie <strong>.xlsx</strong> lub <strong>.xls</strong></li>
+                        <li>Wymagana kolumna: <strong>nazwa</strong> (nazwa projektu)</li>
+                        <li>Opcjonalne kolumny: opis, status, priorytet, termin_wykonania</li>
+                        <li>Status: active, completed, archived</li>
+                        <li>Priorytet: 1 (niski), 2 (średni), 3 (wysoki), 4 (pilny)</li>
+                    </ul>
+                </div>
+                
+                <div class="import-actions">
+                    <a href="{{ url_for('projects.export_projects') }}" class="btn btn-secondary">
+                        ⬇️ Pobierz przykładowe projekty
+                    </a>
+                    
+                    <form method="POST" action="{{ url_for('projects.import_projects') }}" enctype="multipart/form-data" style="margin-top: 20px;">
+                        <div class="file-upload-area" id="dropZone">
+                            <input type="file" name="file" id="fileInput" accept=".xlsx,.xls" required style="display: none;">
+                            <div class="upload-content">
+                                <div class="upload-icon">📁</div>
+                                <p style="margin: 10px 0 5px 0;">Przeciągnij plik Excel tutaj lub kliknij aby wybrać</p>
+                                <small class="text-muted" style="font-size: 0.85rem;">Formaty: .xlsx, .xls</small>
+                            </div>
+                            <p id="fileName" style="margin-top: 10px; font-weight: 600;"></p>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                            <a href="{{ url_for('projects.list_projects') }}" class="btn btn-secondary">Anuluj</a>
+                            <button type="submit" class="btn btn-success" id="uploadBtn" disabled>
+                                📤 Zaimportuj
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div style="margin-top: 20px;">
+                        <a href="#" onclick="downloadTemplate('projects')" class="btn btn-info">
+                            📥 Pobierz szablon Excel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const fileName = document.getElementById('fileName');
+const uploadBtn = document.getElementById('uploadBtn');
+
+dropZone.addEventListener('click', () => fileInput.click());
+
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = '#007bff';
+    dropZone.style.backgroundColor = '#f0f8ff';
+});
+
+dropZone.addEventListener('dragleave', () => {
+    dropZone.style.borderColor = '#ccc';
+    dropZone.style.backgroundColor = '#fafafa';
+});
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = '#ccc';
+    dropZone.style.backgroundColor = '#fafafa';
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        handleFile(files[0]);
+    }
+});
+
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+        handleFile(e.target.files[0]);
+    }
+});
+
+function handleFile(file) {
+    const validTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
+                        'application/vnd.ms-excel'];
+    const validExtensions = ['.xlsx', '.xls'];
+    
+    if (!validTypes.includes(file.type) && !validExtensions.some(ext => file.name.toLowerCase().endsWith(ext))) {
+        alert('Nieprawidłowy format pliku. Wybierz plik Excel (.xlsx lub .xls)');
+        return;
+    }
+    
+    fileName.textContent = `Wybrano: ${file.name}`;
+    uploadBtn.disabled = false;
+}
+
+function downloadTemplate(type) {
+    window.location.href = `/import/template/${type}`;
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.import-page {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 25px 30px;
+}
+
+.card-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.card-body {
+    padding: 30px;
+}
+
+.import-info p {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.import-steps {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+
+.import-steps h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+.import-steps ul {
+    margin: 10px 0;
+    padding-left: 25px;
+}
+
+.import-steps li {
+    margin: 8px 0;
+    color: #555;
+}
+
+.file-upload-area {
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #fafafa;
+}
+
+.file-upload-area:hover {
+    border-color: #007bff;
+    background: #f0f8ff;
+}
+
+.upload-icon {
+    font-size: 3rem;
+    margin-bottom: 10px;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Umiejętności - KIT{% endblock %}
+
+{% block content %}
+<div class="skills-index">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1>Umiejętności</h1>
+        <a href="{{ url_for('users.create_skill') }}" class="btn btn-success">Dodaj umiejętność</a>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nazwa</th>
+                <th>Kategoria</th>
+                <th>Opis</th>
+                <th>Liczba użytkowników</th>
+                <th>Akcje</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for skill in skills %}
+            <tr>
+                <td><strong>{{ skill.name }}</strong></td>
+                <td>{{ skill.category or 'Nieokreślona' }}</td>
+                <td>{{ skill.description or '-' }}</td>
+                <td>{{ skill.users.count() }}</td>
+                <td>
+                    <a href="{{ url_for('users.edit_skill', skill_id=skill.id) }}" class="btn btn-small btn-secondary">Edytuj</a>
+                    <form method="POST" action="{{ url_for('users.delete_skill', skill_id=skill.id) }}" style="display: inline;" onsubmit="return confirm('Czy na pewno chcesz usunąć tę umiejętność?');">
+                        <button type="submit" class="btn btn-small btn-danger">Usuń</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

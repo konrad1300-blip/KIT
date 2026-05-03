@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+
+{% block title %}Analiza obciążenia zespołu - KIT - zen{% endblock %}
+
+{% block content %}
+<div class="analytics-dashboard">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Obciążenie zespołu</h2>
+        </div>
+        <div class="card-body">
+            <div id="teamLoadChartContainer">
+                <canvas id="teamLoadChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Mój czas</h2>
+        </div>
+        <div class="card-body">
+            <div id="userTimeChartContainer">
+                <canvas id="userTimeChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Wąskie gardła</h2>
+        </div>
+        <div class="card-body">
+            <div id="bottleneckAlert">
+                <!-- Bottleneck alerts will be inserted here by JavaScript -->
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Zadanie</th>
+                            <th>Projekt</th>
+                            <th>Przypisane do</th>
+                            <th>Termin</th>
+                            <th>Priorytet</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bottleneckTasks">
+                        <!-- Bottleneck tasks will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Przepływ zadań (Cumulative Flow)</h2>
+        </div>
+        <div class="card-body">
+            <div id="cumulativeFlowChartContainer">
+                <canvas id="cumulativeFlowChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+    .chartjs-size-monitor, .chartjs-render-monitor {
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        overflow: hidden;
+        pointer-events: none;
+        visibility: hidden;
+        z-index: -1;
+    }
+    .chartjs-size-monitor > div, .chartjs-render-monitor > div {
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        overflow: hidden;
+        pointer-events: none;
+        visibility: hidden;
+        z-index: -1;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let teamLoadChart, userTimeChart, cumulativeFlowChart;
+        
+        // Helper to show error messages
+        function showError(containerId, message) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = '<div class="alert alert-danger">' + message + '</div>';
+            }
+        }
+        
+        // Helper to show loading state
+        function showLoading(containerId) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = '<div class="text-center text-muted py-4">Ładowanie...</div>';
+            }
+        }
+        
+        // Fetch team load data
+        showLoading('teamLoadChartContainer');
+        fetch('/api/team-load')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Błąd ładowania danych: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Destroy existing chart if any
+                if (teamLoadChart) {
+                    teamLoadChart.destroy();
+                }
+                
+                const teamLoadCtx = document.getElementById('teamLoadChart').getContext('2d');
+                teamLoadChart = new Chart(teamLoadCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.team_members.map(member => member.full_name),
+                        datasets: [{
+                            label: 'Szacowany czas otwartych zadań (minuty)',
+                            data: data.team_members.map(member => member.total_estimated_open_minutes),
+                            backgroundColor: data.team_members.map(member => 
+                                member.utilization_percentage > 80 ? 'rgba(231, 76, 60, 0.7)' : 'rgba(54, 162, 235, 0.7)'
+                            ),
+                            borderColor: data.team_members.map(member => 
+                                member.utilization_percentage > 80 ? 'rgba(231, 76, 60, 1)' : 'rgba(54, 162, 235, 1)'
+                            ),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Czas (minuty)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.parsed.y + ' minuty (' + 
+                                            data.team_members[context.dataIndex].open_steps_count + ' otwartych zadań)';
+                                    }
+                                }
+                            },
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+                
+                // Show summary if no data
+                if (data.total_open_steps === 0) {
+                    const container = document.getElementById('teamLoadChartContainer');
+                    container.innerHTML = '<div class="alert alert-info mt-2 mb-0">Brak otwartych zadań w zespole.</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading team load data:', error);
+                showError('teamLoadChartContainer', 'Nie udało się załadować danych obciążenia zespołu.');
+            });
+        
+        // Fetch data for bottleneck table
+        fetch('/api/stats')
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                const bottleneckAlert = document.getElementById('bottleneckAlert');
+                const bottleneckTableBody = document.getElementById('bottleneckTasks');
+                
+                if (data.bottleneck_count > 0) {
+                    bottleneckAlert.innerHTML = `
+                        <div class="alert alert-danger">
+                            <strong>Uwaga!</strong> Znaleziono ${data.bottleneck_count} zadań, które są przeterminowane i mają wysoki priorytet.
+                        </div>
+                    `;
+                    
+                    bottleneckTableBody.innerHTML = data.overdue_high_priority_tasks.map(task => `
+                        <tr>
+                            <td>${task.name}</td>
+                            <td>${task.project || '-'}</td>
+                            <td>${task.assigned_to || 'Nieprzypisane'}</td>
+                            <td>${task.due_date ? new Date(task.due_date).toLocaleDateString('pl-PL') : 'Brak'}</td>
+                            <td><span class="badge priority-${task.priority}">${task.priority}</span></td>
+                            <td><span class="badge badge-${task.status === 'completed' ? 'success' : task.status === 'in_progress' ? 'info' : 'warning'}">${task.status}</span></td>
+                        </tr>
+                    `).join('');
+                } else {
+                    bottleneckAlert.innerHTML = `
+                        <div class="alert alert-success">
+                            Brak aktualnych wąskich gardeł.
+                        </div>
+                    `;
+                    bottleneckTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">Brak zadań wymagających natychmiastowej uwagi.</td>
+                        </tr>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading bottleneck data:', error);
+                document.getElementById('bottleneckAlert').innerHTML = 
+                    '<div class="alert alert-warning">Nie udało się załadować danych o wąskich gardłach.</div>';
+            });
+        
+        // Fetch user's time data for the pie chart
+        showLoading('userTimeChartContainer');
+        fetch('/api/stats')
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                const userTimeContainer = document.getElementById('userTimeChartContainer');
+                userTimeContainer.innerHTML = '<canvas id="userTimeChart" width="400" height="200"></canvas>';
+                
+                const userTimeCtx = document.getElementById('userTimeChart').getContext('2d');
+                userTimeChart = new Chart(userTimeCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Do zrobienia', 'W trakcie', 'Zakończone'],
+                        datasets: [{
+                            label: 'Moje zadania według statusu',
+                            data: [data.user_stats.pending || 0, data.user_stats.in_progress || 0, data.user_stats.completed || 0],
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.7)',
+                                'rgba(54, 162, 235, 0.7)',
+                                'rgba(75, 192, 192, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(75, 192, 192, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed || 0;
+                                        return label + ': ' + value + ' zadań';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Show message if no data
+                const totalTasks = data.user_stats.pending + data.user_stats.in_progress + data.user_stats.completed;
+                if (totalTasks === 0) {
+                    userTimeContainer.innerHTML += '<div class="alert alert-info mt-2 mb-0">Brak przypisanych zadań.</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading user stats:', error);
+                showError('userTimeChartContainer', 'Nie udało się załadować danych o moich zadaniach.');
+            });
+        
+        // Fetch cumulative flow chart data
+        showLoading('cumulativeFlowChartContainer');
+        fetch('/api/cumulative-flow')
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                const cumulativeFlowContainer = document.getElementById('cumulativeFlowChartContainer');
+                cumulativeFlowContainer.innerHTML = '<canvas id="cumulativeFlowChart" width="400" height="200"></canvas>';
+                
+                const cumulativeFlowCtx = document.getElementById('cumulativeFlowChart').getContext('2d');
+                cumulativeFlowChart = new Chart(cumulativeFlowCtx, {
+                    type: 'line',
+                    data: {
+                        labels: data.labels,
+                        datasets: data.datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        scales: {
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Liczba zadań'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Data'
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Przepływ zadań (Cumulative Flow)'
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error loading cumulative flow data:', error);
+                showError('cumulativeFlowChartContainer', 'Nie udało się załadować danych o przepływie zadań.');
+            });
+    });
+</script>
+{% endblock %}
