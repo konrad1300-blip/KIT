@@ -2,9 +2,25 @@ Plan działania - przyrostowy - aplikacji KIT.
 Zbuduj aplikacje działającą w przeglądarce do której
 trzeba się zalogować. Logujemy się jako użytkownika
 lub jako administrator. Aplikacja powinna mieć wbudowaną
-bazę danych qslite.
+bazę danych PostgreSQL. Baza ma zawierać listę projektów
+i listę kroków do wykonania. Lista kroków powinna zawierać
+nazwę kroku, opis kroku, osobę która ma wykonać krok,
+czas wykonania kroku, datę wykonania kroku, status
+kroku (wykonany, nie wykonany, w trakcie wykonania).
+Aplikacja powinna mieć możliwość dodawania nowych
+projektów i kroków do wykonania. Aplikacja powinna mieć
+możliwość wyświetlania listy projektów i kroków do
+wykonania. Aplikacja powinna mieć możliwość wyświetlania
+listy kroków do wykonania dla zalogowanego użytkownika.
+Aplikacja powinna mieć możliwość wyświetlania listy
+kroków do wykonania dla zalogowanego użytkownika
+wg statusu. Aplikacja powinna mieć możliwość wyświetlania
+listy kroków do wykonania dla zalogowanego użytkownika
+wg daty wykonania. Aplikacja powinna mieć możliwość
+wy. podziel plik na kilka plików database, models, app, 
+config i inne które uznasz za stosowne 
 
-Wgrałem plik pdf ale kliknięcie na niego nie otwiera go
+
 
 Poszerzenie listy kroków o : wykonanie modelu - wdrożeniowiec; 
 potwierdzenie w ZS i Microsoft SharePoint - technolog;
@@ -59,3 +75,153 @@ Zmień tło wszystkich stron na delikatnie szary.
 Administrator przy dodawaniu użytkownika musi mieć możliwość matrycy kompetencji
 umiejętności powinien dodawać z listy i dodawać je pojedyńczo
 zakres tego zbioru będzie umożliwieł bądź nie wykonanie danego kroku.
+
+
+
+
+### 1. **System powiadomień**
+- Powiadomienia e‑mailowe oraz w aplikacji (np. dymki/alerty na pasku nawigacji).
+- Automatyczne informowanie:
+  - użytkownika o przypisaniu do kroku,
+  - administratora o zakończeniu zadania,
+  - o zbliżającym się terminie `due_date`.
+- Możliwość konfiguracji, które zdarzenia generują powiadomienia.
+
+### 2. **Historia zmian (audyt)**
+- Tabela `logs` rejestrująca wszystkie ważne akcje: utworzenie/edycja/archiwizacja zadania, 
+zmiana statusu kroku, wgrywanie/usuwanie plików.
+- Wyświetlanie historii przy zadaniu lub profilu użytkownika.
+- Pomocne przy analizie błędów i rozliczeniach.
+
+### 3. **Zaawansowany dashboard i KPI**
+- Wykresy i wskaźniki (np. średni czas realizacji kroków, liczba zadań w toku na osobę, opóźnienia).
+- Podsumowanie dla zespołu (osobny widok dla administratora).
+- Eksport dashboardu do PDF/Excel jednym przyciskiem.
+
+### 4. **System komentarzy / dyskusji przy zadaniu**
+- Możliwość dodawania komentarzy w wątku dla każdego zadania i kroku.
+- Powiadomienia o nowych komentarzach.
+- Wsparcie dla wzmianek (@username).
+
+### 5. **Wersjonowanie plików**
+- Zamiast nadpisywania – automatyczne przechowywanie poprzednich wersji wgranego pliku.
+- Lista wersji przy każdym pliku, możliwość przywracania.
+- Pozwala uniknąć utraty poprzednich wersji rysunków czy dokumentacji.
+
+### 6. **Kalendarz i widok Gantta**
+- Widok kalendarzowy dla zadań z terminem `due_date`.
+- Uproszczony wykres Gantta pokazujący planowane i rzeczywiste czasy trwania kroków.
+- Przeciąganie zadań w kalendarzu do zmiany terminu (dla admina).
+
+### 7. **Automatyczne przypisywanie wykonawców**
+- Na podstawie roli, posiadanych umiejętności i aktualnego obciążenia system proponuje 
+(lub automatycznie przypisuje) użytkownika do kroku.
+
+
+### 8. **Import / eksport danych**
+- Import zadań i kroków z pliku Excel/CSV.
+- Eksport wszystkich zadań (z krokami) do Excela – bieżących i archiwalnych.
+- Eksport matrycy kompetencji do CSV.
+
+### 9. **Szablony zadań (nie tylko kroków)**
+- Obecnie są szablony kroków (`task_id = 0`). Można dodać szablony całych zadań 
+(nazwa, opis, priorytet, zbiór kroków).
+- Przy tworzeniu nowego zadania – wybór gotowego szablonu.
+
+### 10. **Zaawansowane filtrowanie i wyszukiwanie**
+- Wyszukiwanie po nazwie projektu, opisie, krokach, plikach, dacie, priorytecie, statusie.
+- Zapisywanie filtrów przez użytkownika („ulubione widoki”).
+- Filtrowanie na stronie archiwum (obecnie tylko lista).
+
+
+### 12. **Workflow z zatwierdzaniem**
+- Dla niektórych kroków wymagane zatwierdzenie przez inną rolę (np. konstruktor → technolog).
+- Dodanie statusów: „oczekuje na zatwierdzenie”, „odrzucony”, „poprawiony”.
+- Historia zatwierdzeń.
+
+### 13. **Zarządzanie rolami i uprawnieniami**
+- Obecnie role są statyczne. Rozbudowa o dynamiczne tworzenie ról i przypisywanie uprawnień 
+(np. tylko do odczytu, tylko do dodawania plików).
+- Możliwość tworzenia grup (np. „Zespół dla produktu”) i przypisywania zadań do grupy.
+
+### 14. **Powtarzalne zadania / cykle**
+- Zadania cykliczne (np. comiesięczna aktualizacja dokumentacji) – automatyczne 
+tworzenie nowej instancji po zakończeniu poprzedniej.
+- Określenie wzorca powtarzania (codziennie, co tydzień, pierwszy dzień miesiąca).
+
+
+- Przystosowanie widoków do urządzeń mobilnych (responsive).
+
+### 17. **Ograniczenie rozmiaru i typów wgrywanych plików**
+- Konfigurowalne dozwolone rozszerzenia (obecnie brak walidacji).
+
+
+### 18. **Raporty dla kierownika projektu**
+- Zestawienie czasu poświęconego na zadania w podziale na projekt, użytkownika, miesiąc.
+- Porównanie czasu szacowanego (`time_estimated`) z rzeczywistym (`time_actual`).
+- Alerty o przekroczeniach czasu.
+
+### 20. **Powiadomienia o nieaktywnych zadaniach**
+- Automatyczne przypomnienia, jeśli krok wisi w statusie „oczekujące” dłużej niż X dni.
+- Eskalacja do administratora.
+
+
+
+Podziel program na logiczne bloki. Chodzi o to by 
+kod podzielić na kilka plików i w efekcie tego
+łatwiej zarządzać programem.
+
+
+
+Użytkownicy mają role, które definiują ich uprawnienia. Lista możliwych ról:
+- technolog
+- konstruktor
+- wdrożeniowiec
+- QC - kontrola jakości
+- Zespół
+Chciałbym aby każde zadanie mogłobyć wykonane przez osobę z odpowiednią rolą ale chciałbym 
+by możnabyło zachowywac pewną wymienność to zanczy.
+przykład:
+Zadanie1 - do wykonania przez technologa - i tutaj wykonuje tylko technolog
+Zadanie2 - do wykonania przez technolog/konstruktor - i tutaj zamiennie zadanie może wykonać i 
+technolog i konstruktor
+Zadanie3 - do wykonania przez zespół - i tutaj zadanie może wykonać dowolny użytkownik
+Zadanie4 - do wykonania przez technolog/wdrożeniowiec - i tutaj zadanie może wykonać tylko technolog lub wdrożeniowiec.
+
+
+możliwość przypisania wielu ról do użytkownika
+możliwość przypisania wielu ról do zadania
+
+
+Chciałbym do kodu programu wkleić i na stałe osadzić w programie jako dane 
+dumyślne przy tworzeniu bazy dabych trzy szablony projektów:
+
+- szablon1
+Analiza zapytania klienta - technolog
+Przygotowanie „szacowanych” plików do kroju z informacją o długości łączeń - konstruktor
+Opracowanie wstępnego BOM -technolog
+Oszacowanie czasów produktów - technolog
+Przygotowanie wstępnej wyceny - technolog
+Weryfikacja dostępności materiałów i komponentów - technolog
+Konsultacja z technologiem - technolog
+
+- szablon2
+Tłumaczenie rysunku + weryfikacja, czy są wszystkie istotne informacje - konstruktor
+Opracowanie plików do kroju - konstruktor
+Przygotowanie układu (na 1 szt. i na najbardziej optymalną ilość) - konstruktor
+Przygotowanie schematu łączenia - konstruktor
+Opracowanie BOM w ERP - technolog
+Ustalenie czasów produkcji z odpowiednim podziałem na procesy - technolog
+Wgranie dokumentacji do MobiDoc (informacje o etykiecie i pakowaniu) - technolog
+
+- szablon3
+Omówienie produktu z konstruktorem i technologiem -technolog/konstruktor/wdrożeniowiec
+Produkcja pierwszej szywki - technolog/wdrożeniowiec
+Kontrola wstępna z konstruktorem i technologiem - technolog/konstruktor/wdrożeniowiec
+Wykonanie zdjęć - technolog/wdrożeniowiec
+Przygotowanie instrukcji krok po kroku - technolog/wdrożeniowiec
+Aktualizacja BOM (w porozumieniu z technologiem)- technolog/wdrożeniowiec
+Przygotowanie kompletnej dokumentacji (MobiDoc) - technolog/wdrożeniowiec
+Akceptacja dokumentacji – spotkanie z konstruktorem, technologiem i liderem produkcji - zespół
+Akceptacja dokumentacji – kontrola finalna QC - QC kontrola jakości
+Informacja / przekazanie technologii na dział produkcyjny - technolog/wdrożeniowiec

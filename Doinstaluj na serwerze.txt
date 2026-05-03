@@ -1,0 +1,5 @@
+Dla działania generowanych PDF-ów doinstaluj na serwerze te biblioteki.
+
+
+
+sudo apt install libpango-1.0-0 libpangoft2-1.0-0 libffi-dev libcairo2 libgdk-pixbuf2.0-0
